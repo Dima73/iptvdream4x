@@ -3,16 +3,23 @@ version: 2.1
 # To test 2.1 config locally you need to run:
 # circleci config process .circleci/config.yml > ci.yml.tmp && circleci local execute -c ci.yml.tmp
 
+executors:
+  py2pli: &py2
+    docker:
+      - image: technic93/e2xvfb:latest
+  py3atv: &py3
+    docker:
+      - image: technic93/e2xvfb:atv-py3
+
 jobs:
   test:
-    docker:
-      - image: technic93/e2xvfb
     parameters:
       provider:
         type: string
         default: "all"
       python:
-        type: string
+        type: executor
+    executor: << parameters.python >>
     environment:
       PROVIDER: << parameters.provider >>
     steps:
@@ -25,7 +32,7 @@ jobs:
             echo PROVIDER=${PROVIDER}
       - when:
           condition:
-            equal: ["2", << parameters.python >>]
+            equal: [*py2, << parameters.python >>]
           steps:
             - run:
                 name: venv
@@ -36,7 +43,7 @@ jobs:
                   python -m pip install pylint pycodestyle twisted "setuptools<45"
       - when:
           condition:
-            equal: ["3", << parameters.python >>]
+            equal: [*py3, << parameters.python >>]
           steps:
             - run:
                 name: venv
@@ -61,7 +68,7 @@ jobs:
           name: test update
           command: |
             mkdir -p /dev/input
-            service apache2 start
+            which apache2 && service apache2 start || service nginx start
             killall Xvfb || true
             Xvfb :99 -ac -screen 0 1280x720x16 &
             export DISPLAY=:99
@@ -71,9 +78,11 @@ jobs:
       - run:
           name: pytest
           command: |
+            export LC_CTYPE="C.UTF-8"
             python -m pip install pytest pytest-cov
-            ps ax
+            ps ax && echo DISPLAY=${DISPLAY}
             ENIGMA_DEBUG_LVL=5 enigma2 /usr/local/bin/pytest -s --cov=src tests/ui/
+            ps ax && echo DISPLAY=${DISPLAY}
             ENIGMA_DEBUG_LVL=5 enigma2 /usr/local/bin/pytest -s --cov=src --cov-append tests/base/
             coverage report
             coverage html
@@ -147,8 +156,8 @@ references:
   python-matrix: &python-matrix
     parameters:
       python:
-        - "2"
-        - "3"
+        - "py2pli"
+        - "py3atv"
 
   config-all: &config-all
     provider: all

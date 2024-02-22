@@ -11,6 +11,7 @@ import re
 from datetime import datetime
 import time
 import shutil
+from sys import version_info
 
 VERSION_FILE = 'src/dist.py'
 PKG_TMP = "/tmp/packages"
@@ -28,7 +29,7 @@ def modifyVersion(func):
 			if m:
 				ver = m.group(1)
 				print("Found version", ver)
-				ver = map(int, ver.split('.'))
+				ver = list(map(int, ver.split('.')))
 				newVer = func(ver)
 				lines[i] = 'VERSION = "%s"' % '.'.join(map(str, newVer))
 				print("Set to", lines[i])
@@ -65,7 +66,7 @@ def test():
 
 	print("Starting make\n" + "-" * 15)
 	buildStartTime = datetime.now()
-	subprocess.check_call(['make', 'package', 'PACKAGEDIR=%s' % PKG_TMP])
+	subprocess.check_call(['make', 'package', 'PACKAGEDIR=%s' % PKG_TMP, 'PYTHON=python%d' % version_info.major])
 	print("-" * 15)
 
 	with open('info.json') as f:
@@ -89,7 +90,7 @@ def test():
 
 	print("Starting make\n" + "-" * 15)
 	subprocess.check_call(['make', 'clean'])
-	subprocess.check_call(['make', 'package', 'PACKAGEDIR=%s' % PKG_DEPLOY])
+	subprocess.check_call(['make', 'package', 'PACKAGEDIR=%s' % PKG_DEPLOY, 'PYTHON=python%d' % version_info.major])
 	print("-" * 15)
 
 	print("Writing hosts alias on box")
@@ -112,7 +113,11 @@ def test():
 	time.sleep(1)
 
 	print("Sending control sequences")
-	for key in ['Escape', 'space', 'Down', 'Down', 'Return', 'Down', 'Down', 'Return']:
+	if version_info.major <= 2:
+		keys = ['Escape', 'space', 'Down', 'Down', 'Return', 'Down', 'Down', 'Return']
+	else:
+		keys = ['Escape', 'space'] + ['Down'] * 3 + ['Return'] + ['Down'] * 5 + ['Return']
+	for key in keys:
 		print("Send key", key)
 		subprocess.check_call(['xdotool', 'key', key])
 
@@ -128,6 +133,8 @@ def test():
 
 	foundVerStr = None
 	output = subprocess.check_output(['opkg', 'status', packageName])
+	if version_info.major > 2:
+		output = output.decode('utf-8')
 	for line in output.splitlines():
 		if line.startswith("Version:"):
 			foundVerStr = line.split(":")[1].strip()

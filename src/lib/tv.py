@@ -14,7 +14,6 @@ from __future__ import print_function
 
 from collections import deque
 from os import mkdir, listdir, path as os_path
-from twisted.web.client import downloadPage
 from twisted.internet.defer import Deferred, succeed, CancelledError
 
 from Components.AVSwitch import AVSwitch
@@ -25,7 +24,7 @@ from ..loc import translate as _
 from ..layer import enigma2Qt
 from ..api.abstract_api import AbstractStream
 from ..utils import trace
-from ..common import fatalError, downloadError, DownloadException
+from ..common import fatalError, downloadPage, DownloadException
 
 
 class SortOrderSettings(object):
@@ -34,7 +33,7 @@ class SortOrderSettings(object):
 			AbstractStream.Sort_N: ('number', _('by number')),
 			AbstractStream.Sort_AZ: ('name', _('by name')),
 		}
-		self.c = config.plugins.IPtvDream.channel_order = ConfigSelection(self.choices.values())
+		self.c = config.plugins.IPtvDream.channel_order = ConfigSelection(list(self.choices.values()))
 
 	def toStr(self, value):
 		return self.choices[value][0]
@@ -87,7 +86,7 @@ class PiconCache(object):
 			d, consumers = self.defers[f]
 			consumers.append(Deferred())
 		except KeyError:
-			d = downloadPage(url, PICON_PATH + f).addErrback(downloadError)
+			d = downloadPage(url, PICON_PATH + f)
 			d.addCallback(self._onLoad, f).addErrback(self._onError, f)
 			consumers = [Deferred()]
 			self.defers[f] = (d, consumers)
@@ -104,7 +103,7 @@ class PiconCache(object):
 			del d
 		if len(self.requests) >= self.CACHE_SIZE:
 			self.trace("wipe cache", self.requests)
-			for _i in xrange(self.CACHE_SIZE / 2):
+			for _i in range(self.CACHE_SIZE // 2):
 				fname = self.requests.popleft()
 				del self.picons[fname]
 				eBackgroundFileEraser.getInstance().erase(PICON_PATH + fname)

@@ -36,8 +36,12 @@ class TestOTTProvider(TestCase):
         self._db.setChannelsList()
         for g in self._db.selectGroups():
             self.assertIsInstance(g, Group)
+            self.assertIsInstance(g.title, str)
+            self.assertIsInstance(g.gid, int)
         for c in self._db.selectAll():
             self.assertIsInstance(c, Channel)
+            self.assertIsInstance(c.name, str)
+            self.assertIsInstance(c.cid, int)
         self.assertGreater(len(self._db.selectAll()), 20)
         print(self._db.selectAll())
 
@@ -59,7 +63,7 @@ class TestOTTProvider(TestCase):
 
     def test_getDayEpg(self):
         self._db.setChannelsList()
-        cid = self._db.channels.keys()[0]
+        cid = self._db.selectAll()[0].cid
         programs = list(self._db.getDayEpg(cid, datetime.now()))
         for entry in programs:
             self.assertIsInstance(entry, EPG)
@@ -80,6 +84,6 @@ class TestOTTProvider(TestCase):
 
     def test_piconUrl(self):
         self._db.setChannelsList()
-        cid = self._db.channels.keys()[0]
+        cid = list(self._db.channels.keys())[0]
         url = self._db.getPiconUrl(cid)
         self.assertIsInstance(url, str)

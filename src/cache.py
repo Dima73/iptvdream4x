@@ -49,7 +49,7 @@ class LiveEpgWorker(object):
 			to_update = [cid for cid, programs in self._epg.items() if (programs and programs[0].end <= t)]
 			self.trace("expired for", to_update)
 		else:
-			to_update = self.db.channels.keys()
+			to_update = list(self.db.channels.keys())
 
 		if to_update:
 			try:

@@ -15,7 +15,7 @@ from json import loads as json_loads
 
 # plugin imports
 from .m3u import M3UProvider
-from ..utils import Channel, APIException
+from ..utils import Channel, APIException, u2str
 
 
 class OTTProvider(M3UProvider):
@@ -37,8 +37,8 @@ class OTTProvider(M3UProvider):
 
 	def setChannelsList(self):
 		m3u = self._locatePlaylist()
-		with open(m3u) as f:
-			self._parsePlaylist(f.read().split('\n'))
+		with open(m3u, 'rb') as f:
+			self._parsePlaylist(f.readlines())
 
 	def makeChannel(self, num, name, url, tvg, logo, rec):
 		m = self._url_regexp.match(url)
@@ -48,7 +48,7 @@ class OTTProvider(M3UProvider):
 			try:
 				data = self._tvg_info[cid_str]
 				tvg = data['tvg-id']
-				logo = data['tvg-logo'].encode('utf-8')
+				logo = u2str(data['tvg-logo'])
 			except KeyError:
 				pass
 		else:

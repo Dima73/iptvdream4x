@@ -13,12 +13,7 @@ from __future__ import print_function
 
 import socket
 import zlib
-try:
-	import cookielib
-except ImportError:
-	import http.cookiejar as cookielib
-import urllib
-import urllib2
+from six.moves import http_cookiejar, urllib_request, urllib_parse
 from json import loads as json_loads
 from os import path as os_path
 from datetime import datetime
@@ -27,7 +22,7 @@ try:
 except ImportError:
 	pass
 
-from ..utils import getHwAddr, Group, Channel, APIException, APILoginFailed, EPG
+from ..utils import getHwAddr, Group, Channel, APIException, APILoginFailed, EPG, u2str
 from ..dist import VERSION
 
 MODE_STREAM = 0
@@ -47,15 +42,11 @@ class AbstractAPI(object):
 	NEXT_API = None
 	NUMBER_PASS = False
 	HAS_PIN = False
-	SERVICES = []
 	USE_SEEK = True
 	AUTH_TYPE = "Login"
 
 	def __init__(self, username, password):
-		"""
-		:param str username:
-		:param str password:
-		"""
+		# type: (str, str) -> None
 		self.username = username
 		self.password = password
 		self.sid = None
@@ -64,8 +55,8 @@ class AbstractAPI(object):
 
 		socket.setdefaulttimeout(10)
 		self.uuid = getHwAddr('eth0')
-		self.cookiejar = cookielib.CookieJar()
-		self.urlopener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cookiejar))
+		self.cookiejar = http_cookiejar.CookieJar()
+		self.urlopener = urllib_request.build_opener(urllib_request.HTTPCookieProcessor(self.cookiejar))
 		self.urlopener.addheaders = [
 					('User-Agent', 'IPtvDream/%s %s' % (VERSION, self.NAME)),
 					('Connection', 'Keep-Alive'),
@@ -126,7 +117,7 @@ class AbstractAPI(object):
 			self.cookiejar.clear()
 
 		try:
-			request = url+urllib.urlencode(params)
+			request = url + urllib_parse.urlencode(params)
 			self.trace("Getting %s (%s)" % (name, request))
 			reply = self.readHttp(request)
 		except IOError as e:
@@ -144,7 +135,7 @@ class AbstractAPI(object):
 			self.cookiejar.clear()
 
 		try:
-			request = url+urllib.urlencode(params)
+			request = url + urllib_parse.urlencode(params)
 			self.trace("Getting %s" % name, url, request)
 			reply = self.readHttp(request)
 		except IOError as e:
@@ -162,9 +153,9 @@ class AbstractAPI(object):
 				return self.getJsonData(url, params, name)
 			error = json['error']
 			if str(error['code']) in ['ACC_WRONG', 'AСС_EMPTY']:
-				raise APILoginFailed(str(error['code']) + ": " + error['message'].encode('utf-8'))
+				raise APILoginFailed(str(error['code']) + ": " + u2str(error['message']))
 			else:
-				raise APIException(str(error['code']) + ": " + error['message'].encode('utf-8'))
+				raise APIException(str(error['code']) + ": " + u2str(error['message']))
 		self.trace("getJsonData ok")
 		return json
 
@@ -222,11 +213,11 @@ class AbstractStream(AbstractAPI):
 	# Return lists for GUI
 
 	def selectGroups(self):
-		return self.groups.values()
+		return list(self.groups.values())
 
 	def selectAll(self, sort_key=Sort_N):
 		attr = self.SORT[sort_key]
-		return sorted(self.channels.values(), key=lambda c: getattr(c, attr))
+		return sorted(list(self.channels.values()), key=lambda c: getattr(c, attr))
 
 	def selectChannels(self, gid, sort_key=Sort_N):
 		attr = self.SORT[sort_key]
@@ -241,7 +232,8 @@ class AbstractStream(AbstractAPI):
 		return [self.channels[cid] for cid in self.favourites]
 
 	def findNumber(self, number):
-		for cid, ch in self.channels.iteritems():
+		from six import iteritems
+		for cid, ch in iteritems(self.channels):
 			if ch.number == number:
 				return cid
 		return None

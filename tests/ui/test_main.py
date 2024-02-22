@@ -109,7 +109,7 @@ class TestEpgScreen(unittest.TestCase):
 
 		dlg = session.open(
 			IPtvDreamEpg,
-			db, db.channels.keys()[0], 0
+			db, db.selectAll()[0].cid, 0
 		)
 
 		dlg.up()

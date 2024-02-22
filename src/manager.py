@@ -432,7 +432,7 @@ class IPtvDreamManager(Screen):
 		self.onFirstExecBegin.append(self.start)
 
 	def start(self):
-		self.list.setList(map(self.makeEntry, manager.getList()))
+		self.list.setList([self.makeEntry(x) for x in manager.getList()])
 
 	def makeEntry(self, entry):
 		prefix = resolveFilename(SCOPE_CURRENT_PLUGIN, 'Extensions/IPtvDream')

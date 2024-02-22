@@ -13,9 +13,10 @@ from __future__ import print_function
 
 from datetime import datetime
 from hashlib import md5
+from six import b
 
 from .abstract_api import MODE_STREAM, AbstractAPI, AbstractStream
-from ..utils import EPG, Group, Channel
+from ..utils import EPG, Group, Channel, u2str
 try:
 	from ..loc import translate as _
 except ImportError:
@@ -39,7 +40,7 @@ class TeleportAPI(AbstractAPI):
 
 	def authorize(self):
 		self.trace("Username is", self.username)
-		md5pass = md5(md5(self.username).hexdigest() + md5(self.password).hexdigest()).hexdigest()
+		md5pass = md5(b(md5(b(self.username)).hexdigest() + md5(b(self.password)).hexdigest())).hexdigest()
 		params = {"login": self.username, "pass": md5pass, "with_cfg": '', "with_acc": ''}
 		response = self.getJsonData(self.site+"/login?", params, fromauth=True)
 
@@ -87,13 +88,13 @@ class TeleportStream(AbstractStream, TeleportAPI):
 			for c in g['channels']:
 				cid = c['id']
 				channel = Channel(
-						cid, c['name'].encode('utf-8'), c['number'],
+						cid, u2str(c['name']), c['number'],
 						bool(c['has_archive']), bool(c['protected']))
 				self.channels[cid] = channel
 				channels.append(channel)
-				self.icons[cid] = c['icon'].encode('utf-8')
-			self.groups[gid] = Group(gid, g['user_title'].encode('utf-8'), channels)
-		self.icons_url = data['icons']['default'].encode('utf-8')
+				self.icons[cid] = u2str(c['icon'])
+			self.groups[gid] = Group(gid, u2str(g['user_title']), channels)
+		self.icons_url = u2str(data['icons']['default'])
 		self.trace(self.groups)
 
 	def getStreamUrl(self, cid, pin, time=None):
@@ -103,7 +104,7 @@ class TeleportStream(AbstractStream, TeleportAPI):
 		if time:
 			params["uts"] = time.strftime("%s")
 		data = self.getJsonData(self.site+"/get_url_tv?", params, "stream url")
-		return data["url"].encode("utf-8")
+		return u2str(data["url"])
 
 	def getChannelsEpg(self, cids):
 		params = {"cid": ','.join(str(c) for c in cids), "time_shift": self.time_shift}
@@ -138,7 +139,7 @@ class TeleportStream(AbstractStream, TeleportAPI):
 	def getFavourites(self):
 		response = self.getJsonData(self.site + "/get_favorites_tv?", {})
 		if response['favorites']:
-			return map(int, response['favorites'].split(','))
+			return list(map(int, response['favorites'].split(',')))
 		else:
 			return []
 

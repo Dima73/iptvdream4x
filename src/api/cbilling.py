@@ -11,7 +11,7 @@
 from __future__ import print_function
 
 # system imports
-import urllib
+from six.moves import urllib_parse
 from json import loads as json_loads
 
 # plugin imports
@@ -38,7 +38,7 @@ class OTTProvider(OfflineFavourites):
 	def _getJson(self, url, params):
 		try:
 			self.trace(url)
-			reply = self.readHttp(url + urllib.urlencode(params))
+			reply = self.readHttp(url + urllib_parse.urlencode(params))
 		except IOError as e:
 			raise APIException(e)
 		try:

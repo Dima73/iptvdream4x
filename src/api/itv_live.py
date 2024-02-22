@@ -11,14 +11,13 @@
 from __future__ import print_function
 
 # system imports
-import urllib
-import urllib2
+from six.moves import urllib_parse
 import zlib
 from json import loads as json_loads, dumps as json_dumps
 
 # plugin imports
 from .abstract_api import OfflineFavourites
-from ..utils import syncTime, APIException, APILoginFailed, EPG, Channel, Group
+from ..utils import syncTime, APIException, APILoginFailed, EPG, Channel, Group, u2str
 
 
 class OTTProvider(OfflineFavourites):
@@ -37,7 +36,7 @@ class OTTProvider(OfflineFavourites):
 
 		data = self._getJson(self.site + '/data/%s' % self.username, {})
 		for number, ch in enumerate(data['channels']):
-			group = ch['cat_name'].encode('utf-8')
+			group = u2str(ch['cat_name'])
 			gid = int(ch['cat_id'])
 			try:
 				g = self.groups[gid]
@@ -45,11 +44,11 @@ class OTTProvider(OfflineFavourites):
 				g = self.groups[gid] = Group(gid, group, [])
 
 			cid = int(ch['ch_id'][2:])
-			c = Channel(cid, ch['channel_name'].encode('utf-8'), number, bool(int(ch['rec'])), False)
+			c = Channel(cid, u2str(ch['channel_name']), number, bool(int(ch['rec'])), False)
 			self.channels[cid] = c
 			self.channels_data[cid] = {
-				'url': ch['ch_url'].encode('utf-8'),
-				'logo': ch['logo_url'].encode('utf-8'),
+				'url': u2str(ch['ch_url']),
+				'logo': u2str(ch['logo_url']),
 				'id': ch['ch_id_epg'],
 			}
 			g.channels.append(c)
@@ -57,7 +56,7 @@ class OTTProvider(OfflineFavourites):
 	def _getJson(self, url, params):
 		self.trace(url)
 		try:
-			reply = self.readHttp(url + urllib.urlencode(params))
+			reply = self.readHttp(url + urllib_parse.urlencode(params))
 		except IOError as e:
 			raise APIException(e)
 		try:
@@ -76,16 +75,16 @@ class OTTProvider(OfflineFavourites):
 	def getChannelsEpg(self, cids):
 		req = '/epg/{"chid": [%s]}/1' % ",".join(
 			'"%d:%s"' % (cid, self.channels_data[cid]['id']) for cid in cids)
-		data = self._getJson(self.site + urllib2.quote(req, safe='/:",'), {})
+		data = self._getJson(self.site + urllib_parse.quote(req, safe='/:",'), {})
 
 		for e in data['res']:
 			yield int(e['id']), [EPG(
-				int(e['startTime']), int(e['stopTime']), e['title'].encode('utf-8'), e['desc'].encode('utf-8')
+				int(e['startTime']), int(e['stopTime']), u2str(e['title']), u2str(e['desc'])
 			)]
 
 	def getDayEpg(self, cid, date):
 		data = self._getJson(self.site + '/epg/%s/%s' % (self.channels_data[cid]['id'], date.strftime('%Y-%m-%d')), {})
-		return [EPG(int(e['startTime']), int(e['stopTime']), e['title'].encode('utf-8')) for e in data['res']]
+		return [EPG(int(e['startTime']), int(e['stopTime']), u2str(e['title'])) for e in data['res']]
 
 	def getPiconUrl(self, cid):
 		return self.channels_data[cid]['logo']

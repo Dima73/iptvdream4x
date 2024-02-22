@@ -55,7 +55,7 @@ kbd_languages = {
 class VirtualKeyBoard(VirtualKeyBoard_e2):
 	def __init__(self, session, title="", text="", languages=None):
 		if languages is None:
-			languages = kbd_languages.keys()
+			languages = list(kbd_languages.keys())
 		self.languages = {}
 		for lang in languages:
 			try:
@@ -66,7 +66,7 @@ class VirtualKeyBoard(VirtualKeyBoard_e2):
 
 	def setLang(self):
 		print("setLang", self.lang)
-		l = self.languages.keys()
+		l = list(self.languages.keys())
 		if self.lang in l:
 			i = l.index(self.lang)
 		else:

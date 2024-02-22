@@ -13,7 +13,7 @@ from __future__ import print_function
 
 # system imports
 from datetime import datetime, timedelta
-import urllib
+from six.moves import urllib_parse
 try:
 	# noinspection PyUnresolvedReferences
 	from typing import Callable, Optional, List, Tuple  # pylint: disable=unused-import
@@ -251,7 +251,7 @@ class IPtvDreamStreamPlayer(
 	def playUrl(self, url):
 		cid = self.cid
 		if self.cfg.use_hlsgw.value:
-			url = "http://localhost:7001/url=%s" % urllib.quote(url)
+			url = "http://localhost:7001/url=%s" % urllib_parse.quote(url)
 		trace("play", url)
 		ref = eServiceReference(int(self.cfg.playerid.value), 0, url)
 		ref.setName(self.db.channels[cid].name)
@@ -597,7 +597,7 @@ class ChannelList(MenuList):
 			self.num = 0
 
 	def setChannelsList(self, channels):
-		self.setList(map(self.buildChannelEntry, channels))
+		self.setList(list(map(self.buildChannelEntry, channels)))
 		# Create map from channel id to its index in list
 		self.index = dict((entry[0][0].cid, i) for (i, entry) in enumerate(self.list))
 		if self.num:
@@ -645,7 +645,7 @@ class ChannelList(MenuList):
 		self.highlight_cid = cid
 
 	def setGroupList(self, groups):
-		self.setList(map(self.buildGroupEntry, groups))
+		self.setList(list(map(self.buildGroupEntry, groups)))
 		self.index = {}
 
 	def calculateWidth(self, text, font):
@@ -762,7 +762,7 @@ class History(object):
 			return None
 
 	def __repr__(self):
-		return map(str, self._history)
+		return repr(list(map(str, self._history)))
 
 
 class HistoryEntry(object):
@@ -775,7 +775,7 @@ class HistoryEntry(object):
 		return HistoryEntry(self.mode, self.gid, self.gr_idx, self.cid, self.ch_idx)
 
 	def fromStr(self, s):
-		self.mode, self.gid, self.gr_idx, self.cid, self.ch_idx = map(int, s.split(","))
+		self.mode, self.gid, self.gr_idx, self.cid, self.ch_idx = list(map(int, s.split(",")))
 
 	def toStr(self):
 		return ",".join(map(str, (self.mode, self.gid, self.gr_idx, self.cid, self.ch_idx)))
@@ -1378,7 +1378,7 @@ class IPtvDreamEpg(Screen):
 		except APIException as e:
 			self.session.open(MessageBox, _("Can not load EPG:") + str(e), MessageBox.TYPE_ERROR, 5)
 
-		self.list.setList(map(self.buildEpgEntry, epg_list))
+		self.list.setList(list(map(self.buildEpgEntry, epg_list)))
 		self.setTitle("EPG / %s / %s %s" % (self.db.channels[self.cid].name, d.strftime("%d"), _(d.strftime("%b"))))
 		self.list.setIndex(0)
 

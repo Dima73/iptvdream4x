@@ -16,7 +16,7 @@ from json import loads as json_loads
 # plugin imports
 from .m3u import M3UProvider
 from .abstract_api import JsonSettings
-from ..utils import APIException, Channel, ConfSelection, ConfString, syncTime
+from ..utils import APIException, Channel, ConfSelection, ConfString, str2u, syncTime
 try:
 	from ..loc import translate as _
 except ImportError:
@@ -52,11 +52,11 @@ class Playlist(JsonSettings, M3UProvider):
 		try:
 			if self._m3u_from == 'file':
 				m3u = self._locatePlaylist()
-				with open(m3u) as f:
+				with open(m3u, 'rb') as f:
 					self._parsePlaylist(f.readlines())
 			elif self._m3u_from == 'url':
 				try:
-					lines = self.readHttp(self.playlist_url).split('\n')
+					lines = self.readHttp(self.playlist_url).split(b'\n')
 				except (IOError, ValueError) as e:
 					self.trace("error!", e, type(e))
 					raise APIException(e)
@@ -70,7 +70,7 @@ class Playlist(JsonSettings, M3UProvider):
 	def makeChannel(self, num, name, url, tvg, logo, rec):
 		if tvg is None:
 			try:
-				tvg = self.name_map[name.decode('utf-8')]
+				tvg = self.name_map[str2u(name)]
 			except KeyError:
 				pass
 		if self.archive_tag == 'tagged':

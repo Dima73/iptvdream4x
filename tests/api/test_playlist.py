@@ -25,7 +25,7 @@ class Test(ott_provider.TestOTTProvider):
 
 		def parse():
 			m3u = prov._locatePlaylist()
-			with open(m3u) as f:
+			with open(m3u, 'rb') as f:
 				prov._parsePlaylist(f.readlines())
 
 		import timeit

@@ -11,7 +11,7 @@
 from __future__ import print_function
 
 from . import ott_provider
-from src.api.edem import OTTProvider
+from src.api.edem_soveni import OTTProvider
 
 
 class Test(ott_provider.TestOTTProvider):

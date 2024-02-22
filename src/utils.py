@@ -11,19 +11,51 @@
 
 from __future__ import print_function
 
+try:
+	from typing import List
+except ImportError:
+	pass
+
+from sys import version_info
 from functools import wraps
 from datetime import datetime, timedelta
 import time
-import re
-try:
-	import htmlentitydefs
-except ImportError:
-	# ignore it, because it is not used
-	pass
 
 
 def trace(*args):
-	print("[IPtvDream]", " ".join(map(str, args)))
+	print("[IPtvDream]", *args)
+
+
+if version_info.major <= 2:
+	def u2str(s):
+		# type: (unicode) -> str
+		"""Convert unicode to str for display in enigma2 ui"""
+		return s.encode('utf-8')
+
+	def str2u(s):
+		# type: (str) -> unicode
+		"""Convert str to unicode"""
+		return s.decode('utf-8')
+
+	def b2str(s):
+		# type: (str) -> str
+		"""Python2 str is bytes"""
+		return s
+else:
+	def u2str(s):
+		# type: (str) -> str
+		"""Python3 str is unicode"""
+		return s
+
+	def str2u(s):
+		# type: (str) -> str
+		"""Python3 str is unicode"""
+		return s
+
+	def b2str(s):
+		# type: (bytes) -> str
+		"""Convert bytes to string"""
+		return s.decode('utf-8')
 
 
 def timeit(f):
@@ -38,6 +70,7 @@ def timeit(f):
 
 
 def getHwAddr(ifname):
+	from six import b
 	try:
 		import fcntl
 		import socket
@@ -46,10 +79,14 @@ def getHwAddr(ifname):
 		return '00:00:00:00:00:00'
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	try:
-		info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack('256s', ifname[:15]))
+		info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack('256s', b(ifname[:15])))
 	except IOError:
 		return '00:00:00:00:00:00'
-	return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
+	if version_info.major > 2:
+		ordb = lambda x: x
+	else:
+		ordb = ord
+	return ''.join(['%02x:' % ordb(char) for char in info[18:24]])[:-1]
 
 
 global Timezone
@@ -268,7 +305,7 @@ class EPGDB(object):
 		if hi is None:
 			hi = len(self.l)
 		while lo < hi:
-			mid = (lo+hi)/2
+			mid = (lo+hi)//2
 			if x < self.l[mid][0]:
 				hi = mid
 			else:
@@ -316,7 +353,7 @@ class EPGDB(object):
 			return None
 
 	def checkHint(self, i, t):
-		return i > 0 and (i == len(self.l) or t < self.l[i][0]) and (i == 0 or self.l[i-1] <= t)
+		return i > 0 and (i == len(self.l) or t < self.l[i][0]) and (i == 0 or self.l[i-1][0] <= t)
 
 	### Public methods
 
@@ -381,6 +418,7 @@ class Group(object):
 	__slots__ = ('gid', 'title', 'channels')
 
 	def __init__(self, gid, title, channels):
+		# type: (int, str, List[Channel]) -> None
 		"""
 		:param int gid: group id
 		:param str title: title to display
@@ -405,6 +443,7 @@ class Group(object):
 
 class Channel(EPGDB):
 	def __init__(self, cid, name, number, has_archive=False, is_protected=False):
+		# type: (int, str, int, bool, bool) -> None
 		"""
 		:param int cid: channel id
 		:param str name: channel title
@@ -425,28 +464,6 @@ class Channel(EPGDB):
 
 	def __repr__(self):
 		return self.__str__()
-
-
-def unescapeEntities(text):
-	def fixup(m):
-		text = m.group(0)
-		if text[:2] == "&#":
-			# character reference
-			try:
-				if text[:3] == "&#x":
-					return unichr(int(text[3:-1], 16))
-				else:
-					return unichr(int(text[2:-1]))
-			except ValueError:
-				pass
-		else:
-			# named entity
-			try:
-				text = unichr(htmlentitydefs.name2codepoint[text[1:-1]])
-			except KeyError:
-				pass
-		return text  # leave as is
-	return re.sub(r"&#?\w+;", fixup, text)
 
 
 class APIException(Exception):

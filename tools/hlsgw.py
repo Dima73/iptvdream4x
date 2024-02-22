@@ -22,13 +22,11 @@
 from __future__ import print_function
 
 import socket
-import urlparse
-import urllib
-import urllib2
+from six.moves import urllib_request, urllib_parse
 import time
 import datetime
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-from SocketServer import ThreadingMixIn
+from six.moves.BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+from six.moves.socketserver import ThreadingMixIn
 import logging
 from logging.handlers import RotatingFileHandler
 
@@ -44,8 +42,8 @@ def getBestBitrate(variants, bitrate=0):
 
 
 def readM3U8Chunks(URL, duration=30, chunk_size=1024*4):
-	req = urllib2.Request(url=URL, headers={'User-Agent': USER_AGENT})
-	conn = urllib2.urlopen(url=req, timeout=60)
+	req = urllib_request.Request(url=URL, headers={'User-Agent': USER_AGENT})
+	conn = urllib_request.urlopen(url=req, timeout=60)
 	while True:
 		data = conn.read(chunk_size)
 		if data:
@@ -75,8 +73,8 @@ def isM3U8Valid(conn):
 
 
 def getM3U8Lines_iterator(url):
-	req = urllib2.Request(url=url, headers={'User-Agent': USER_AGENT})
-	con = urllib2.urlopen(url=req, timeout=10)
+	req = urllib_request.Request(url=url, headers={'User-Agent': USER_AGENT})
+	con = urllib_request.urlopen(url=req, timeout=10)
 	enc = isM3U8Valid(con)
 	for l in con:
 		if l.startswith('#EXT') or not l.startswith('#'):
@@ -166,7 +164,7 @@ def serveHLS(url, write_cb, bitrate=0):
 		if bitrate:
 			bitrate -= (bitrate/10)
 		if len(variants):
-			url = urlparse.urljoin(root_url, getBestBitrate(variants, bitrate))
+			url = urllib_parse.urljoin(root_url, getBestBitrate(variants, bitrate))
 
 		media_start_time = datetime.datetime.now()
 		media_bytes_total = 0
@@ -176,7 +174,7 @@ def serveHLS(url, write_cb, bitrate=0):
 				continue
 			seq, duration, targetduration, media_url = media
 			if seq > last_seq:
-				for chunk in readM3U8Chunks(urlparse.urljoin(url, media_url), targetduration or duration):
+				for chunk in readM3U8Chunks(urllib_parse.urljoin(url, media_url), targetduration or duration):
 					data += chunk
 					media_bytes_total += len(chunk)
 					if buffering_needed and len(data) < 15000000/8:
@@ -216,7 +214,7 @@ class HlsHandler(BaseHTTPRequestHandler):
 	def do_GET(self):
 		"""Handler for the GET requests"""
 		try:
-			url = urllib.unquote(self.path)
+			url = urllib_parse.unquote(self.path)
 			n = url.find('url=')
 			if n == -1 or not len(url[n+4:]):
 				self.send_response(404)

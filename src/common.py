@@ -13,6 +13,8 @@
 from __future__ import print_function
 
 from functools import wraps
+from six import b
+from twisted.web.client import downloadPage as _downloadPage
 
 from Components.config import ConfigText
 from Components.Sources.StaticText import StaticText
@@ -51,6 +53,10 @@ class DownloadException(Exception):
 def downloadError(err):
 	"""Wrap twisted download failure in DownloadException"""
 	raise DownloadException(err.getErrorMessage())
+
+
+def downloadPage(url, path):
+	return _downloadPage(b(url), path).addErrback(downloadError)
 
 
 class ConfigNumberText(ConfigText):

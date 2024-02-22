@@ -30,7 +30,7 @@ class KartinaAPI(AbstractAPI):
 	def __init__(self, username, password):
 		super(KartinaAPI, self).__init__(username, password)
 		self.softid = "dev-test-000"
-		self.uuid = md5(self.uuid).hexdigest()
+		self.uuid = md5(self.uuid.encode('utf-8')).hexdigest()
 
 	def start(self):
 		self.authorize()

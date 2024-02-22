@@ -11,11 +11,12 @@
 from __future__ import print_function
 
 # system imports
-from io import StringIO, BytesIO
+from io import BytesIO
+from six import b
 from collections import OrderedDict
-import urllib
+from six.moves import urllib_parse
 from json import loads as json_loads, dumps as json_dumps
-from twisted.web.client import downloadPage, FileBodyProducer, Agent, Headers
+from twisted.web.client import FileBodyProducer, Agent, Headers
 from twisted.web._newclient import ResponseDone
 from twisted.web.error import Error as WebError
 from twisted.internet import reactor
@@ -41,7 +42,7 @@ from .virtualkb import VirtualKeyBoard
 from .common import ConfigNumberText
 from .api.abstract_api import AbstractStream
 from .loc import translate as _
-from .common import safecb, fatalError
+from .common import safecb, fatalError, downloadPage
 
 try:
 	from typing import List, Tuple, Dict  # pylint: disable=unused-import
@@ -104,9 +105,9 @@ class SettingsRepository(object):
 
 	def getAllSettings(self):
 		self._updateSettings()
-		cfg_list = self._enigma_settings.items()
-		cfg_list += self._local_settings.items()
-		cfg_list += self._remote_settings.items()
+		cfg_list = list(self._enigma_settings.items())
+		cfg_list += list(self._local_settings.items())
+		cfg_list += list(self._remote_settings.items())
 		return cfg_list
 
 	def saveValues(self, values):
@@ -183,7 +184,7 @@ def convertConfEntry(conf):
 
 def getRequest(url):
 	agent = Agent(reactor)
-	d = agent.request(b'GET', url, headers=defaultHeaders())
+	d = agent.request(b'GET', b(url), headers=defaultHeaders())
 	return d.addErrback(agentError).addCallback(readResponseBody)
 
 
@@ -191,7 +192,7 @@ def postRequest(url, body):
 	agent = Agent(reactor)
 	headers = defaultHeaders()
 	headers.addRawHeader('Content-Type', 'application/json')
-	d = agent.request(b'POST', url, headers=headers, bodyProducer=FileBodyProducer(BytesIO(body)))
+	d = agent.request(b'POST', b(url), headers=headers, bodyProducer=FileBodyProducer(BytesIO(b(body))))
 	return d.addErrback(agentError).addCallback(readResponseBody)
 
 
@@ -330,7 +331,7 @@ class WebConfig(object):
 		else:
 			revision = self.revision
 
-		url = self.site + 'stb/poll?' + urllib.urlencode({'sid': self.session, 'revision': revision})
+		url = self.site + 'stb/poll?' + urllib_parse.urlencode({'sid': self.session, 'revision': revision})
 		self._run_defer = getRequest(url)
 		self._run_defer.addCallback(cb).addErrback(eb)
 
@@ -343,7 +344,7 @@ class WebConfig(object):
 
 	def stop(self):
 		trace("Delete session ...")
-		d = getRequest(self.site + 'stb/del-session?' + urllib.urlencode({'sid': self.session}))
+		d = getRequest(self.site + 'stb/del-session?' + urllib_parse.urlencode({'sid': self.session}))
 		if self._run_defer:
 			self._run_defer.cancel()
 		self.session = None
@@ -380,7 +381,7 @@ class IPtvDreamWebConfig(Screen):
 
 	@staticmethod
 	def makeQrUrl(url):
-		params = urllib.urlencode({'data': url, 'size': '200x200', 'ecc': 'M'})
+		params = urllib_parse.urlencode({'data': url, 'size': '200x200', 'ecc': 'M'})
 		return "http://api.qrserver.com/v1/create-qr-code/?" + params
 
 	def showCode(self, data):
@@ -522,7 +523,14 @@ class IPtvDreamConfig(ConfigListScreen, Screen):
 
 	def openKeyboard(self):
 		c = self["config"].getCurrent()
-		self.session.openWithCallback(self.VirtualKeyBoardCallback, VirtualKeyBoard, c[0], c[1].getValue(), ['en_EN'])
+		try:
+			cb = self.VirtualKeyBoardCallback
+		except AttributeError:
+			try:
+				cb = self.keyTextCallback
+			except AttributeError:
+				raise Exception("Callback method not found")
+		self.session.openWithCallback(cb, VirtualKeyBoard, c[0], c[1].getValue(), ['en_EN'])
 
 	def keySave(self):
 		trace("Save config")

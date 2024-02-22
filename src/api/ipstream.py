@@ -11,8 +11,8 @@
 from __future__ import print_function
 
 # system imports
-from urllib2 import HTTPError
-import urllib
+from six.moves.urllib_error import HTTPError
+from six.moves import urllib_parse
 from json import loads as json_loads
 
 # plugin imports
@@ -44,7 +44,7 @@ class IpStreamOne(JsonSettings, M3UProvider):
 	def _getJson(self, url, params):
 		try:
 			self.trace(url)
-			reply = self.readHttp(url + urllib.urlencode(params))
+			reply = self.readHttp(url + urllib_parse.urlencode(params))
 		except IOError as e:
 			raise APIException(e)
 		try:
@@ -65,7 +65,7 @@ class IpStreamOne(JsonSettings, M3UProvider):
 	def start(self):
 		self._downloadTvgMap()
 		try:
-			self._parsePlaylist(self.readHttp(self.playlist_url % self._token).split('\n'))
+			self._parsePlaylist(self.readHttp(self.playlist_url % self._token).split(b'\n'))
 		except HTTPError as e:
 			self.trace("HTTPError:", e, type(e), e.getcode())
 			if e.code in (403, 404):

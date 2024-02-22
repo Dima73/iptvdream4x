@@ -12,13 +12,13 @@ from __future__ import print_function
 
 # system imports
 import re
-from urllib2 import HTTPError
+from six.moves.urllib_error import HTTPError
 from json import loads as json_loads
 
 # plugin imports
 from .m3u import M3UProvider
 from .abstract_api import JsonSettings
-from ..utils import Channel, APIException, APILoginFailed, ConfInteger
+from ..utils import Channel, APIException, APILoginFailed, ConfInteger, str2u
 try:
 	from ..loc import translate as _
 except ImportError:
@@ -48,7 +48,7 @@ class OTTProvider(JsonSettings, M3UProvider):
 
 		self._downloadTvgMap()
 		try:
-			self._parsePlaylist(self.readHttp(self.playlist_url).split('\n'))
+			self._parsePlaylist(self.readHttp(self.playlist_url).split(b'\n'))
 		except HTTPError as e:
 			self.trace("HTTPError:", e, type(e), e.getcode())
 			if e.code in (403, 404):
@@ -66,7 +66,7 @@ class OTTProvider(JsonSettings, M3UProvider):
 	def makeChannel(self, num, name, url, tvg, logo, rec):
 		if tvg is None:
 			try:
-				tvg = self.name_map[name.decode('utf-8')]
+				tvg = self.name_map[str2u(name)]
 			except KeyError:
 				pass
 		m = self._url_regexp.match(url)

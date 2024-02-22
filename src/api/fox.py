@@ -11,7 +11,7 @@
 from __future__ import print_function
 
 # system imports
-from urllib2 import HTTPError
+from six.moves.urllib_error import HTTPError
 
 # plugin imports
 from .abstract_api import JsonSettings
@@ -37,7 +37,7 @@ class OTTProvider(JsonSettings, M3UProvider):
 	def start(self):
 		self._downloadTvgMap()
 		try:
-			self._parsePlaylist(self.readHttp(self.playlist_url).split('\n'))
+			self._parsePlaylist(self.readHttp(self.playlist_url).split(b'\n'))
 		except HTTPError as e:
 			self.trace("HTTPError:", e, type(e), e.getcode())
 			if e.code in (403, 404):

@@ -126,12 +126,6 @@ class ProvisionScreen(MessageBox):
 			trace(e)
 			install_list.append("python-subprocess")
 
-		try:
-			import htmlentitydefs
-		except ImportError as e:
-			trace(e)
-			install_list.append("python-html")
-
 		if not commandExists("exteplayer3"):
 			install_list.append("exteplayer3")
 

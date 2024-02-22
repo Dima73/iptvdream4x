@@ -2,7 +2,7 @@
 
 """ Minimal code to start enigma2 and copy of Session class defined in mytest.py """
 
-# TODO: from __future__ import print_function
+from __future__ import print_function
 
 # Setup enigma2 core module
 import enigma
@@ -47,7 +47,7 @@ class Session:
 			try:
 				p(reason=0, session=self)
 			except:
-				print "Plugin raised exception at WHERE_SESSIONSTART"
+				print("Plugin raised exception at WHERE_SESSIONSTART")
 				import traceback
 				traceback.print_exc()
 
@@ -162,7 +162,7 @@ class Session:
 
 	def close(self, screen, *retval):
 		if not self.in_exec:
-			print "close after exec!"
+			print("close after exec!")
 			return
 
 		# be sure that the close is for the right dialog!
@@ -200,12 +200,12 @@ def getSession():
 	if _session is not None:
 		return _session
 
-	print "===== Init Session! ====="
+	print("===== Init Session! =====")
 	from Components.SetupDevices import InitSetupDevices
 	InitSetupDevices()
 	# import InfoBar to ensure correct import order
 
-	from Components.config import config, ConfigYesNo, ConfigInteger, NoSave
+	from Components.config import config, ConfigYesNo, ConfigInteger, NoSave, ConfigSubsection, ConfigText
 	from Components.ParentalControl import InitParentalControl
 	InitParentalControl()
 	from Navigation import Navigation
@@ -218,10 +218,35 @@ def getSession():
 	config.misc.prev_wakeup_time_type = ConfigInteger(default=0)
 	# 0 = RecordTimer, 1 = ZapTimer, 2 = Plugins, 3 = WakeupTimer
 
+	# atv
+	config.osd = ConfigSubsection()
+	config.osd.language = ConfigText(default="US")
+	config.crash = ConfigSubsection()
+	config.crash.debugActionMaps = ConfigYesNo(default=False)
+	config.crash.debugKeyboards = ConfigYesNo(default=False)
+	config.crash.debugRemoteControls = ConfigYesNo(default=False)
+	config.crash.debugScreens = ConfigYesNo(default=False)
+	config.plugins = ConfigSubsection()
+
+	try:
+		from Components.StackTrace import StackTracePrinter
+		StackTracePrinterInst = StackTracePrinter()
+	except ImportError:
+		StackTracePrinterInst = None
+
 	from Components.UsageConfig import InitUsageConfig
 	InitUsageConfig()
-	from skin import loadSkinData
-	loadSkinData(enigma.getDesktop(0))
+	if StackTracePrinterInst:
+		StackTracePrinterInst.deactivate()
+
+	try:
+		# openATV
+		from skin import loadSkinData
+		loadSkinData(enigma.getDesktop(0))
+	except ImportError:
+		# openPLi
+		from skin import InitSkins
+		InitSkins()
 
 	from Screens.Screen import Screen
 	from Screens.Globals import Globals

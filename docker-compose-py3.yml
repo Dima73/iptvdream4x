@@ -1,0 +1,19 @@
+version: '2'
+services:
+  enigma2:
+    image: e2full
+    build: 
+      context: vm-docker
+      args:
+        IMAGE_TAG: atv-py3
+    container_name: enigma2
+    working_dir: /project
+    ports:
+      - 5900:5900
+      - 5678:5678
+    volumes:
+      - './src:/usr/lib/enigma2/python/Plugins/Extensions/IPtvDream'
+      - './skins/IPtvDream:/usr/share/enigma2/IPtvDream'
+      - './skins/IPtvDreamContrast:/usr/share/enigma2/IPtvDreamContrast'
+      - './:/project'
+

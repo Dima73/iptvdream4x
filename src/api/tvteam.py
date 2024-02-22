@@ -11,14 +11,14 @@
 from __future__ import print_function
 
 # system imports
-from urllib2 import URLError
-import urllib
+from six.moves.urllib_error import URLError
+from six.moves import urllib_parse
 from hashlib import md5
 from json import loads as json_loads
 
 # plugin imports
 from .abstract_api import JsonSettings, OfflineFavourites
-from ..utils import APIException, APILoginFailed, Channel, Group, EPG
+from ..utils import APIException, APILoginFailed, Channel, Group, EPG, u2str
 
 
 class OTTProvider(OfflineFavourites, JsonSettings):
@@ -40,7 +40,7 @@ class OTTProvider(OfflineFavourites, JsonSettings):
 		self._tokens = []
 		response = self._getJson(self.site, {
 			'userLogin': self.username,
-			'userPasswd': md5(self.password).hexdigest(),
+			'userPasswd': md5(self.password.encode('utf-8')).hexdigest(),
 		}, reauth=False)
 		self.sid = response['sessionId']
 		self.trace("Session", self.sid)
@@ -51,8 +51,8 @@ class OTTProvider(OfflineFavourites, JsonSettings):
 
 		try:
 			self.trace(url, params.get('apiAction', 'AUTH'))
-			self.trace(url + urllib.urlencode(params))
-			reply = self.readHttp(url + urllib.urlencode(params))
+			self.trace(url + urllib_parse.urlencode(params))
+			reply = self.readHttp(url + urllib_parse.urlencode(params))
 		except URLError as e:
 			self.trace("URLError:", e)
 			raise APIException(e)
@@ -83,16 +83,16 @@ class OTTProvider(OfflineFavourites, JsonSettings):
 			for c in g['channelsList']:
 				cid = int(c['channelId'])
 				channel = Channel(
-					cid, c['channelName'].encode('utf-8'),
+					cid, u2str(c['channelName']),
 					int(c['sortOrder']), int(c['archiveLen']) > 0, bool(int(c['isPorno']))
 				)
 				self.channels[cid] = channel
 				self.channels_data[cid] = {
-					'logo': c['channelLogo'].encode('utf-8'),
-					'url': c['liveLink'].encode('utf-8'),
+					'logo': u2str(c['channelLogo']),
+					'url': u2str(c['liveLink']),
 				}
 				channels.append(channel)
-			self.groups[gid] = Group(gid, g['groupName'].encode('utf-8'), channels)
+			self.groups[gid] = Group(gid, u2str(g['groupName']), channels)
 
 	def getStreamUrl(self, cid, pin, time=None):
 		if self.channels[cid].is_protected:

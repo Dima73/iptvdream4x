@@ -11,12 +11,12 @@
 from __future__ import print_function
 
 # system imports
-from urllib2 import HTTPError
+from six.moves.urllib_error import HTTPError
 
 # plugin imports
 from .m3u import M3UProvider
 from .abstract_api import JsonSettings
-from ..utils import APIException, APILoginFailed, Channel, Group, ConfSelection
+from ..utils import APIException, APILoginFailed, Channel, Group, ConfSelection, b2str, str2u
 try:
 	from ..loc import translate as _
 except ImportError:
@@ -43,7 +43,7 @@ class Korona(JsonSettings, M3UProvider):
 	def start(self):
 		self._downloadTvgMap()
 		try:
-			self._parsePlaylist(self.readHttp(self.playlist_url).split('\n'))
+			self._parsePlaylist(self.readHttp(self.playlist_url).split(b'\n'))
 		except HTTPError as e:
 			self.trace("HTTPError:", e, type(e), e.getcode())
 			if e.code in (403, 404):
@@ -75,12 +75,13 @@ class Korona(JsonSettings, M3UProvider):
 		cid_regexp = re.compile('#EXTINF:.*CUID="([^"]*)"')
 
 		for line in lines:
+			line = b2str(line)
 			if line.startswith("#EXTINF:"):
 				name = line.strip().split(',')[1]
 				m = tvg_regexp.match(line)
 				if m:
 					if self.tvg_map:
-						k = unicode(m.group(1))
+						k = str2u(m.group(1))
 						try:
 							tvg = self.tvg_map[k]
 						except KeyError:

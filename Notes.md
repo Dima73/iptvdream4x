@@ -42,3 +42,15 @@ Pull or push docker image changes upstream
 ```
 git subtree push -P docker git@github.com:technic/e2xvfb.git master
 ```
+
+# Docker
+
+run test
+```
+docker run --rm -v "$(pwd):/work" -e DESTDIR=/tmp/build technic93/e2xvfb python update-test.py
+```
+
+run build
+```
+docker run --rm -v "$(pwd):/work" -e DESTDIR=/tmp/build technic93/e2xvfb make
+```

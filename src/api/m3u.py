@@ -18,7 +18,7 @@ from json import loads as json_loads
 
 # plugin imports
 from .abstract_api import OfflineFavourites
-from ..utils import syncTime, APIException, EPG, Channel, Group
+from ..utils import u2str, str2u, b2str, syncTime, APIException, EPG, Channel, Group
 
 
 class M3UProvider(OfflineFavourites):
@@ -84,7 +84,7 @@ class M3UProvider(OfflineFavourites):
 	def setChannelsList(self):
 		self._downloadTvgMap()
 		try:
-			self._parsePlaylist(self.readHttp(self.playlist_url).split('\n'))
+			self._parsePlaylist(self.readHttp(self.playlist_url).split(b'\n'))
 		except IOError as e:
 			self.trace("error!", e, type(e))
 			raise APIException(e)
@@ -134,12 +134,13 @@ class M3UProvider(OfflineFavourites):
 				lines[0] = lines[0][3:]
 
 		for line in lines:
+			line = b2str(line)
 			if line.startswith("#EXTINF:"):
-				name = line.strip().split(',')[1]
+				name = line.split(',')[1].strip()
 				m = tvg_regexp.match(line)
 				if m:
 					if self.tvg_map:
-						k = m.group(1).decode('utf-8')
+						k = str2u(m.group(1))
 						try:
 							tvg = self.tvg_map[k]
 						except KeyError:
@@ -222,7 +223,7 @@ class M3UProvider(OfflineFavourites):
 		data = self.getJsonData(self.site + "/epg_day?", params)
 		return [EPG(
 			int(e['begin']), int(e['end']),
-			e['title'].encode('utf-8'), e['description'].encode('utf-8')) for e in data['data']]
+			u2str(e['title']), u2str(e['description'])) for e in data['data']]
 
 	def getChannelsEpg(self, cids):
 		t = mktime(syncTime().timetuple())
@@ -241,8 +242,8 @@ class M3UProvider(OfflineFavourites):
 				continue
 			for cid in cids:
 				yield cid, [EPG(
-					int(e['begin']), int(e['end']), e['title'].encode('utf-8'),
-					e['description'].encode('utf-8')) for e in c['programs']]
+					int(e['begin']), int(e['end']), u2str(e['title']),
+					u2str(e['description'])) for e in c['programs']]
 
 	def getPiconUrl(self, cid):
 		return self.channels_data[cid]['logo']

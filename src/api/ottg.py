@@ -11,7 +11,7 @@
 from __future__ import print_function
 
 # system imports
-from urllib import urlencode
+from six.moves.urllib_parse import urlencode
 import re
 
 # plugin imports
