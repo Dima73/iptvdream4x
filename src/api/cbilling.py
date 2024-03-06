@@ -16,18 +16,18 @@ from json import loads as json_loads
 
 # plugin imports
 from .abstract_api import OfflineFavourites
-from ..utils import syncTime, APIException, APILoginFailed, EPG, Channel, Group
+from ..utils import syncTime, APIException, APILoginFailed, EPG, Channel, Group, u2str
 
 
 class OTTProvider(OfflineFavourites):
 	NAME = "cbilling"
 	AUTH_TYPE = "Token"
-	token_page = "https://cbilling.pw"
+	token_page = "https://cbilling.eu"
 
 	def __init__(self, username, password):
 		super(OTTProvider, self).__init__(username, password)
-		self.site = "http://cbilling.pw/enigma"
-		self.api_site = "http://api.iptvx.tv/"
+		self.site = "http://cbilling.eu/enigma"
+		self.api_site = "http://protected-api.com"
 		self._token = password
 		self.web_names = {}
 		self.urls = {}
@@ -51,16 +51,16 @@ class OTTProvider(OfflineFavourites):
 	def getToken(self, code):
 		data = self._getJson(self.site + "/auth.php?", {'code': code})
 		if int(data['status']) == 1:
-			self._token = data['token'].encode('utf-8')
+			self._token = u2str(data['token'])
 			return self._token
 		else:
 			self._token = None
-			raise APILoginFailed(data['message'].encode('utf-8'))
+			raise APILoginFailed(u2str(data['message']))
 
 	def authorize(self):
 		data = self._getJson(self.site + "/update.php?", {'token': self._token})
 		if int(data['status']) != 1:
-			raise APILoginFailed(data['message'].encode('utf-8'))
+			raise APILoginFailed(u2str(data['message']))
 		self.parseChannels(data['channels'])
 
 	def parseChannels(self, channelsData):
@@ -70,7 +70,7 @@ class OTTProvider(OfflineFavourites):
 		self.urls = {}
 		group_names = {}
 		for number, ch in enumerate(channelsData):
-			group = ch['category'].encode('utf-8')
+			group = u2str(ch['category'])
 			try:
 				gid = group_names[group]
 				g = self.groups[gid]
@@ -80,10 +80,10 @@ class OTTProvider(OfflineFavourites):
 				g = self.groups[gid] = Group(gid, group, [])
 
 			cid = hash(ch['web_name'])
-			c = Channel(cid, ch['name'].encode('utf-8'), number, bool(ch['archive']), False)
+			c = Channel(cid, u2str(ch['name']), number, bool(ch['archive']), False)
 			self.channels[cid] = c
-			self.web_names[cid] = ch['web_name'].encode('utf-8')
-			self.urls[cid] = ch['url'].encode('utf-8')
+			self.web_names[cid] = u2str(ch['web_name'])
+			self.urls[cid] = u2str(ch['url'])
 			g.channels.append(c)
 
 	def getStreamUrl(self, cid, pin, time=None):
@@ -94,7 +94,7 @@ class OTTProvider(OfflineFavourites):
 	def getDayEpg(self, cid, date):
 		data = self._getJson(self.api_site + "/epg/%s/?" % self.web_names[cid], {"date": date.strftime("%Y-%m-%d")})
 		return [
-			EPG(e['time'], e['time_to'], e['name'].encode('utf-8'), e['descr'].encode('utf-8'))
+			EPG(e['time'], e['time_to'], u2str(e['name']), u2str(e['descr']))
 			for e in data
 		]
 
@@ -102,6 +102,6 @@ class OTTProvider(OfflineFavourites):
 		data = self._getJson(self.api_site + "/epg/current", {})
 		for c in data:
 			yield hash(c['alias']), [
-				EPG(e['time'], e['time_to'], e['name'].encode('utf-8'), e['descr'].encode('utf-8'))
+				EPG(e['time'], e['time_to'], u2str(e['name']), u2str(e['descr']))
 				for e in c['epg']
 			]

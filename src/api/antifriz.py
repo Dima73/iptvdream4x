@@ -18,7 +18,7 @@ from json import loads as json_loads
 
 # plugin imports
 from .abstract_api import OfflineFavourites
-from ..utils import APIException, APILoginFailed, EPG, Channel, Group
+from ..utils import APIException, APILoginFailed, EPG, Channel, Group, u2str
 
 
 class OTTProvider(OfflineFavourites):
@@ -27,8 +27,8 @@ class OTTProvider(OfflineFavourites):
 
 	def __init__(self, username, password):
 		super(OTTProvider, self).__init__(username, password)
-		self.playlist_url = "https://antifriz.tv/api/enigma/%s" % username
-		self.api_site = "http://api.iptvx.tv/"
+		self.playlist_url = "https://antifriztv.com/api/enigma/%s" % username
+		self.api_site = "http://media.af-play.com"
 		self.web_names = {}
 		self.urls = {}
 
@@ -70,7 +70,7 @@ class OTTProvider(OfflineFavourites):
 		self.urls = {}
 		group_names = {}
 		for number, ch in enumerate(channelsData):
-			group = ch['category'].encode('utf-8')
+			group = u2str(ch['category'])
 			try:
 				gid = group_names[group]
 				g = self.groups[gid]
@@ -80,10 +80,10 @@ class OTTProvider(OfflineFavourites):
 				g = self.groups[gid] = Group(gid, group, [])
 
 			cid = hash(ch['web_name'])
-			c = Channel(cid, ch['name'].encode('utf-8'), number, bool(ch['archive']), False)
+			c = Channel(cid, u2str(ch['name']), number, bool(ch['archive']), False)
 			self.channels[cid] = c
-			self.web_names[cid] = ch['web_name'].encode('utf-8')
-			self.urls[cid] = ch['url'].encode('utf-8')
+			self.web_names[cid] = u2str(ch['web_name'])
+			self.urls[cid] = u2str(ch['url'])
 			g.channels.append(c)
 
 	def getStreamUrl(self, cid, pin, time=None):
@@ -95,7 +95,7 @@ class OTTProvider(OfflineFavourites):
 	def getDayEpg(self, cid, date):
 		data = self._getJson(self.api_site + "/epg/%s/?" % self.web_names[cid], {"date": date.strftime("%Y-%m-%d")})
 		return [
-			EPG(e['time'], e['time_to'], e['name'].encode('utf-8'), e['descr'].encode('utf-8'))
+			EPG(e['time'], e['time_to'], u2str(e['name']), u2str(e['descr']))
 			for e in data
 		]
 
@@ -103,6 +103,6 @@ class OTTProvider(OfflineFavourites):
 		data = self._getJson(self.api_site + "/epg/current", {})
 		for c in data:
 			yield hash(c['alias']), [
-				EPG(e['time'], e['time_to'], e['name'].encode('utf-8'), e['descr'].encode('utf-8'))
+				EPG(e['time'], e['time_to'], u2str(e['name']), u2str(e['descr']))
 				for e in c['epg']
 			]

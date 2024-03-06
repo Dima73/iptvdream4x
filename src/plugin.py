@@ -67,14 +67,16 @@ def pluginRun(name, session, **kwargs):
 	def run():
 		from .manager import runner
 		runner.runPlugin(session, name)
-	checkUpdate(session, lambda: provision(session, run))
+	#checkUpdate(session, lambda: provision(session, run))
+	provision(session, run)
 
 
 def managerRun(session, **kwargs):
 	def run():
 		from .manager import runner
 		runner.runManager(session)
-	checkUpdate(session, lambda: provision(session, run))
+	#checkUpdate(session, lambda: provision(session, run))
+	provision(session, run)
 
 
 def makeMenuEntry(name, menuid):

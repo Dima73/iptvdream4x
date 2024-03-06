@@ -524,12 +524,23 @@ class IPtvDreamConfig(ConfigListScreen, Screen):
 	def openKeyboard(self):
 		c = self["config"].getCurrent()
 		try:
+			def keyTextCallback(callback=None):
+				if callback is not None:
+					self["config"].getCurrent()[1].setValue(callback)
+					self["config"].invalidate(self["config"].getCurrent())
+		except:
+			raise Exception("Callback save method error")
+		try:
 			cb = self.VirtualKeyBoardCallback
 		except AttributeError:
 			try:
 				cb = self.keyTextCallback
 			except AttributeError:
-				raise Exception("Callback method not found")
+				try:
+					cb = keyTextCallback
+				except:
+					raise Exception("Callback method not found")
+					return
 		self.session.openWithCallback(cb, VirtualKeyBoard, c[0], c[1].getValue(), ['en_EN'])
 
 	def keySave(self):
@@ -546,5 +557,8 @@ class IPtvDreamConfig(ConfigListScreen, Screen):
 				lambda ret: self.close(False),
 				MessageBox, _("Failed to save settings") + "\n%s" % str(ex), MessageBox.TYPE_ERROR)
 
-	def logout(self):
-		self.close(None)
+	def logout(self,answer=None):
+		if answer is None:
+			self.session.openWithCallback(self.logout, MessageBox, _("Logout")+ "?", default=False)
+		elif answer:
+			self.close(None)

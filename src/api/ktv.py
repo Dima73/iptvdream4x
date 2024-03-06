@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from hashlib import md5
 
 from .abstract_api import AbstractAPI, OfflineFavourites
-from ..utils import toDate, EPG, Channel, Group, APIWrongPin
+from ..utils import toDate, EPG, Channel, Group, APIWrongPin, u2str
 try:
 	from ..loc import translate as _
 except ImportError:
@@ -56,17 +56,17 @@ class KartinaAPI(AbstractAPI):
 		d = data['bitrate']
 		self.settings['bitrate'] = ConfSelection(
 			title=_("Bitrate"), value=str(d['value']), choices=[
-				(str(n['val']), n['title'].encode('utf-8')) for n in d['names']
+				(str(n['val']), u2str(n['title'])) for n in d['names']
 			])
 		d = data['stream_server']
 		self.settings['stream_server'] = ConfSelection(
 			title=_("Stream server"), value=str(d['value']), choices=[
-				(str(s['ip']), s['descr'].encode('utf-8')) for s in d['list']
+				(str(s['ip']), u2str(s['descr'])) for s in d['list']
 			])
 		d = data['stream_standard']
 		self.settings['stream_standard'] = ConfSelection(
 			title=_("Stream format"), value=str(d['value']), choices=[
-				(str(s['value']), s['title'].encode('utf-8')) for s in d['list']
+				(str(s['value']), u2str(s['title'])) for s in d['list']
 			])
 
 
@@ -98,13 +98,13 @@ class KtvStream(OfflineFavourites, KartinaAPI):
 			for c in g['channels']:
 				cid = int(c['id'])
 				channel = Channel(
-					cid, c['name'].encode('utf-8'), cid,
+					cid, u2str(c['name']), cid,
 					bool(int(c.get('have_archive', 0))), bool(int(c.get('protected', 0)))
 				)
 				self.channels[cid] = channel
-				self.icons[cid] = c['icon'].encode('utf-8')
+				self.icons[cid] = u2str(c['icon'])
 				channels.append(channel)
-			self.groups[gid] = Group(gid, g['name'].encode('utf-8'), channels)
+			self.groups[gid] = Group(gid, u2str(g['name']), channels)
 
 	def getStreamUrl(self, cid, pin, time=None):
 		params = {"cid": cid}
@@ -113,7 +113,7 @@ class KtvStream(OfflineFavourites, KartinaAPI):
 		if pin:
 			params["protect_code"] = pin
 		data = self.getJsonData(self.site + "/get_url?", params)
-		url = data['url'].encode('utf-8').split(' ')[0].replace('http/ts://', 'http://')
+		url = u2str(data['url']).split(' ')[0].replace('http/ts://', 'http://')
 		if url == "protected":
 			raise APIWrongPin("")
 		return url
@@ -127,7 +127,7 @@ class KtvStream(OfflineFavourites, KartinaAPI):
 			e = None
 			for p in channel['epg']:
 				t = int(p['ts'])
-				name, desc = self.parseName(p['progname'].encode('utf-8'))
+				name, desc = self.parseName(u2str(p['progname']))
 				if e is not None:
 					t_start, name, desc = e  # pylint: disable=unpacking-non-sequence
 					programs.append(EPG(t_start, t, name, desc))
@@ -166,7 +166,7 @@ class KtvStream(OfflineFavourites, KartinaAPI):
 		data = self.getJsonData(self.site + "/epg?", params, "day EPG %s for channel %s" % (params['day'], cid))
 		for program in data['epg']:
 			t = int(program['ut_start'])
-			name, desc = self.parseName(program['progname'].encode("utf-8"))
+			name, desc = self.parseName(u2str(program['progname']))
 			yield (t, name, desc)
 
 	def getPiconUrl(self, cid):

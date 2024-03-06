@@ -19,7 +19,7 @@ from json import loads as json_loads
 # plugin imports
 from .abstract_api import OfflineFavourites
 from ..utils import u2str, str2u, b2str, syncTime, APIException, EPG, Channel, Group
-
+from ..loc import translate as _
 
 class M3UProvider(OfflineFavourites):
 	NAME = "M3U"
@@ -56,7 +56,7 @@ class M3UProvider(OfflineFavourites):
 
 		m3u8 = os.path.join(path, self.playlist)
 		if not os.path.exists(m3u8):
-			raise APIException("%s playlist not found! Please copy your playlist to %s." % (self.NAME, m3u8))
+			raise APIException(_("%s playlist not found! Please copy your playlist to %s.") % (self.NAME, m3u8))
 		return m3u8
 
 	def _extractKeyFromPlaylist(self, url_regexp):
@@ -75,7 +75,7 @@ class M3UProvider(OfflineFavourites):
 					self.trace("found domain and key in user playlist")
 					break
 		if not (self._domain and self._key):
-			raise APIException("Failed to parse %s playlist located at %s." % (self.NAME, m3u8))
+			raise APIException(_("Failed to parse %s playlist located at %s.") % (self.NAME, m3u8))
 
 	def start(self):
 		url_regexp = re.compile(r"https?://([\w.]+)/iptv/(\w+)/\d+/index.m3u8")
@@ -126,6 +126,7 @@ class M3UProvider(OfflineFavourites):
 		logo_regexp = re.compile('#EXTINF:.*tvg-logo="([^"]*)"')
 		rec_regexp = re.compile('#EXTINF:.*tvg-rec="([^"]*)"')
 		catchup_regexp = re.compile('#EXTINF:.*catchup-days="([^"]*)"')
+		timeshift_regexp = re.compile('#EXTINF:.*timeshift="([^"]*)"')
 
 		import codecs
 		if lines:
@@ -166,7 +167,14 @@ class M3UProvider(OfflineFavourites):
 					if m:
 						rec = m.group(1) != "0"
 					else:
-						rec = False
+						m = timeshift_regexp.match(line)
+						if m:
+							try:
+								rec = m.group(1) != "0"
+							except:
+								rec = False
+						else:
+							rec = False
 			elif line.startswith("#EXTGRP:"):
 				group = line.strip().split(':')[1]
 			elif line.startswith("#"):

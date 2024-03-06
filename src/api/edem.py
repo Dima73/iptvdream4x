@@ -19,13 +19,13 @@ from ..utils import Channel, APIException, u2str
 
 
 class OTTProvider(M3UProvider):
-	NAME = "EdemTV"
+	NAME = "ILookTV"
 	TVG_MAP = True
 
 	def __init__(self, username, password):
 		super(OTTProvider, self).__init__(username, password)
 		self.site = "http://technic.cf/epg-it999/"
-		self.playlist = "edem_pl.m3u8"
+		self.playlist = "ilook_pl.m3u8"
 		self._tvg_info = {}
 
 	def start(self):

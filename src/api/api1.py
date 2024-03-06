@@ -45,7 +45,7 @@ class TeleportAPI(AbstractAPI):
 		response = self.getJsonData(self.site+"/login?", params, fromauth=True)
 
 		if 'sid' in response:
-			self.sid = response['sid'].encode("utf-8")
+			self.sid = u2str(response['sid'])
 
 		if 'settings' in response:
 			self.parseSettings(response['settings'])
@@ -62,7 +62,7 @@ class TeleportAPI(AbstractAPI):
 		self.settings['media_server_id'] = ConfSelection(
 			title=_("Media server"),
 			value=str(data['media_server_id']),
-			choices=[(str(s['id']), s['title'].encode('utf-8')) for s in data['media_servers']]
+			choices=[(str(s['id']), u2str(s['title'])) for s in data['media_servers']]
 		)
 		self.settings['time_shift'] = ConfInteger(_("Time shift"), data['time_shift'], (0, 24))
 
@@ -77,7 +77,7 @@ class TeleportStream(AbstractStream, TeleportAPI):
 		self.icons_url = ""
 
 	def epgEntry(self, e):
-		return EPG(int(e['begin']), int(e['end']), e['title'].encode('utf-8'), e['info'].encode('utf-8'))
+		return EPG(int(e['begin']), int(e['end']), u2str(e['title']), u2str(e['info']))
 
 	def setChannelsList(self):
 		params = {"with_epg": 0, "time_shift": self.time_shift}

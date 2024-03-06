@@ -21,7 +21,7 @@ except ImportError:
 	pass
 
 # plugin imports
-from ..utils import syncTime, EPG
+from ..utils import syncTime, EPG, secTd
 from ..layer import eTimer
 
 
@@ -29,13 +29,15 @@ class EpgProgress(Source):
 	def __init__(self):
 		super(EpgProgress, self).__init__()
 		self._epg = None
+		self._shift = 0
 		self._timer = eTimer()
 		self._timer.callback.append(self.updateProgress)
 		self.onChanged = []  # type: List[Callable[[float],None]]
 
-	def setEpg(self, epg):
+	def setEpg(self, epg, shift=0):
 		# type: (Optional[EPG]) -> None
 		self._epg = epg
+		self._shift = shift
 		if self._epg is not None and self._epg.duration() > 0:
 			self._timer.start(1000)
 			self.updateProgress()
@@ -44,6 +46,8 @@ class EpgProgress(Source):
 
 	def getProgress(self):
 		# type: () -> float
+		if self._shift:
+			return self._epg.progress(syncTime() + secTd(self._shift))
 		return self._epg.progress(syncTime())
 
 	def updateProgress(self):

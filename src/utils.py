@@ -90,22 +90,22 @@ def getHwAddr(ifname):
 
 
 global Timezone
-Timezone = -time.timezone / 3600
+Timezone = -time.timezone // 3600
 trace("timezone is GMT", Timezone)
 
 
 def tdSec(td):
-	return td.days * 86400 + td.seconds
+	return int((td.days * 86400) + td.seconds)
 
 
 def tdmSec(td):
 	# Add +1. Timer should wait for next event until event happened exactly.
 	# Otherwise inaccuracy in round may lead to mistake.
-	return int(tdSec(td) * 1000)+1
+	return int(tdSec(td) * 1000) + 1
 
 
 def secTd(sec):
-	return timedelta(sec / 86400, sec % 86400)
+	return timedelta(sec // 86400, sec % 86400)
 
 
 def tupleTd(tup):
@@ -163,7 +163,7 @@ class EPG(object):
 
 	def percent(self, t, size):
 		try:
-			return size * self.timePass(t) / self.duration()
+			return size * self.timePass(t) // self.duration()
 		except ZeroDivisionError:
 			return size
 

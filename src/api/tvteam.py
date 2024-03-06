@@ -27,7 +27,7 @@ class OTTProvider(OfflineFavourites, JsonSettings):
 
 	def __init__(self, username, password):
 		super(OTTProvider, self).__init__(username, password)
-		self.site = "http://tv.team/api/?"
+		self.site = "http://tvteam.eu/api/?"
 		self.channels_data = {}
 		self._tokens = []
 
@@ -69,7 +69,7 @@ class OTTProvider(OfflineFavourites, JsonSettings):
 				self.authorize()
 				return self._getJson(url, params, reauth=False)
 			else:
-				raise APIException(json['error'].encode('utf-8'))
+				raise APIException(u2str(json['error']))
 		return json['data']
 
 	def setChannelsList(self):
@@ -109,7 +109,7 @@ class OTTProvider(OfflineFavourites, JsonSettings):
 				'apiAction': 'getRandomTokens',
 				'cnt': 30,
 			})
-			self._tokens = [t.encode('utf-8') for t in data['tokens']]
+			self._tokens = [u2str(t) for t in data['tokens']]
 		token = self._tokens.pop()
 
 		url = self.channels_data[cid]['url']
@@ -125,7 +125,7 @@ class OTTProvider(OfflineFavourites, JsonSettings):
 		return [
 			EPG(
 				int(e['prStartSec']), int(e['prStopSec']),
-				e['prTitle'].encode('utf-8'), e['prSubTitle'].encode('utf-8')
+				u2str(e['prTitle']), u2str(e['prSubTitle'])
 			) for e in data['tvProgram']
 		]
 
@@ -133,8 +133,11 @@ class OTTProvider(OfflineFavourites, JsonSettings):
 		data = self._getJson(self.site, {'apiAction': 'getCurrentPrograms'})
 		for cid, ps in data['currentPrograms'].items():
 			yield (int(cid), [
-				EPG(int(e['prStartSec']), int(e['prStopSec']), e['prTitle'].encode('utf-8')) for e in ps
+				EPG(int(e['prStartSec']), int(e['prStopSec']), u2str(e['prTitle'])) for e in ps
 			])
 
 	def getPiconUrl(self, cid):
-		return self.channels_data[cid]['logo']
+		picon_url = self.channels_data[cid]['logo']
+		if picon_url:
+			return picon_url.replace('tv.team', 'tvteam.eu')
+		return picon_url

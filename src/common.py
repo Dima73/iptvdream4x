@@ -47,6 +47,8 @@ def safecb(callback):
 class DownloadException(Exception):
 	"""Twisted download exception"""
 	def __init__(self, message):
+		time_out = _("time out")
+		message = _(message)
 		Exception.__init__(self, message)
 
 
@@ -184,9 +186,9 @@ class AutoAudioSelection(Screen):
 		self.audio_selected = False
 
 	def audioSelect(self):
-		trace("audioSelect")
 		if self.audio_selected:
 			return
+		trace("audioSelect")
 		self.audio_selected = True
 		service = self.session.nav.getCurrentService()
 		audio = service and service.audioTracks()

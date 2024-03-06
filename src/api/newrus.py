@@ -12,7 +12,7 @@
 from datetime import datetime
 
 from .abstract_api import AbstractAPI, AbstractStream, MODE_STREAM
-from ..utils import Group, Channel, EPG, APIWrongPin
+from ..utils import Group, Channel, EPG, APIWrongPin, u2str
 
 
 class NewrusAPI(AbstractAPI):
@@ -69,11 +69,11 @@ class OTTProvider(AbstractStream, NewrusAPI):
 				num += 1
 				cid = int(c['id'])
 				channel = Channel(
-					cid, c['name'].encode('utf-8'), num,
+					cid, u2str(c['name']), num,
 					bool(c['have_archive']), bool(c['protected']))
 				self.channels[cid] = channel
 				channels.append(channel)
-			self.groups[gid] = Group(gid, g['name'].encode('utf-8'), channels)
+			self.groups[gid] = Group(gid, u2str(g['name']), channels)
 
 	def getStreamUrl(self, cid, pin, time=None):
 		params = {"cid": cid}
@@ -82,7 +82,7 @@ class OTTProvider(AbstractStream, NewrusAPI):
 		if time:
 			params["gmt"] = time.strftime("%s")
 		data = self.getJsonData(self.site + "/get_url.php?", params)
-		url = data["url"].encode("utf-8")
+		url = u2str(data["url"])
 		if url == "protected":
 			raise APIWrongPin("Access denied")
 		return url
@@ -99,7 +99,7 @@ class OTTProvider(AbstractStream, NewrusAPI):
 		for g in data["groups"]:
 			for c in g["channels"]:
 				cid = int(c["id"])
-				name, description = self.parseProgram(c['epg_progname'].encode('utf-8'))
+				name, description = self.parseProgram(u2str(c['epg_progname']))
 				if name:
 					yield cid, [EPG(int(c['epg_start']), int(c['epg_end']), name, description)]
 
@@ -107,7 +107,7 @@ class OTTProvider(AbstractStream, NewrusAPI):
 		params = {"cid": cid, "day": date.strftime("%d%m%y")}
 		data = self.getJsonData(self.site + "/epg.php?", params)
 		for program in data['epg']:
-			name, description = self.parseProgram(program['progname'].encode('utf-8'))
+			name, description = self.parseProgram(u2str(program['progname']))
 			yield EPG(program['ut_start'], program['ut_end'], name, description)
 
 	def getSettings(self):

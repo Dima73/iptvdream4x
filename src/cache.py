@@ -20,7 +20,7 @@ try:
 	from typing import List, Dict, Callable, Tuple  # pylint: disable=unused-import
 except ImportError:
 	pass
-
+from threading import Thread
 
 class LiveEpgWorker(object):
 	"""
@@ -30,11 +30,12 @@ class LiveEpgWorker(object):
 	def __init__(self, db):
 		self.onUpdate = []  # type: List[Callable[ [List[Tuple[int, EPG]]], None ]]
 		self.db = db  # type: AbstractStream
+		self.testThread = None
 		self._timer = eTimer()
 		self._timer.callback.append(self.update)
 		self._epg = {}  # type: Dict[int, List[EPG]]
 		if len(self.db.channels):
-			self.update()
+			self.run_update()
 		else:
 			self.trace("No channels!")
 
@@ -42,6 +43,10 @@ class LiveEpgWorker(object):
 		trace("LiveEpgWorker", *args)
 
 	def update(self):
+		self.testThread = Thread(target=self.run_update)
+		self.testThread.start()
+
+	def run_update(self):
 		t = datetime.now()
 		self.trace("update() at", t)
 		if self._epg:
@@ -86,10 +91,14 @@ class LiveEpgWorker(object):
 		"""Call before del to avoid cycle references, because eTimer holds reference to self."""
 		self._timer.callback.remove(self.update)
 		self._timer.stop()
+		if self.testThread:
+			self.testThread.join()
 
 	def stop(self):
 		self.trace("Stop.")
 		self._timer.stop()
+		if self.testThread:
+			self.testThread.join()
 
 	def get(self, cid):
 		try:

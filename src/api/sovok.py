@@ -13,7 +13,7 @@ from __future__ import print_function
 from datetime import datetime
 
 from .abstract_api import OfflineFavourites
-from ..utils import Channel, Group, APIWrongPin, EPG
+from ..utils import Channel, Group, APIWrongPin, EPG, u2str
 
 
 class OTTProvider(OfflineFavourites):
@@ -52,13 +52,13 @@ class OTTProvider(OfflineFavourites):
 				cid = int(c['id'])
 				number += 1
 				channel = Channel(
-					cid, c['name'].encode('utf-8'), number,
+					cid, u2str(c['name']), number,
 					bool(int(c['have_archive'])), bool(int(c['protected']))
 				)
 				self.channels[cid] = channel
-				self.icons[cid] = c['icon'].encode('utf-8')
+				self.icons[cid] = u2str(c['icon'])
 				channels.append(channel)
-			self.groups[gid] = Group(gid, g['name'].encode('utf-8'), channels)
+			self.groups[gid] = Group(gid, u2str(g['name']), channels)
 
 	def getStreamUrl(self, cid, pin, time=None):
 		params = {"cid": cid}
@@ -67,7 +67,7 @@ class OTTProvider(OfflineFavourites):
 		if pin:
 			params["protect_code"] = pin
 		data = self.getJsonData(self.site + "/get_url?", params)
-		url = data['url'].encode('utf-8').split(' ')[0].replace('http/ts://', 'http://')
+		url = u2str(data['url']).split(' ')[0].replace('http/ts://', 'http://')
 		if url == "protected":
 			raise APIWrongPin("")
 		return url
@@ -77,14 +77,14 @@ class OTTProvider(OfflineFavourites):
 		for e in data['epg']:
 			yield int(e['chid']), [EPG(
 				int(e['start']), int(e['end']),
-				e['progname'].encode('utf-8'), e['description'].encode('utf-8'))]
+				u2str(e['progname']), u2str(e['description']))]
 
 	def getDayEpg(self, cid, date):
 		data = self.getJsonData(self.site + "/epg?", {'cid': cid, 'day': date.strftime("%d%m%y")})
 		for e in data['epg']:
 			yield EPG(
 				int(e['ut_start']), int(e['ut_end']),
-				e['progname'].encode('utf-8'), e['description'].encode('utf-8'))
+				u2str(e['progname']), u2str(e['description']))
 
 	def getPiconUrl(self, cid):
 		url = self.icons[cid]

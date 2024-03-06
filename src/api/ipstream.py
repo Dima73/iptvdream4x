@@ -18,7 +18,7 @@ from json import loads as json_loads
 # plugin imports
 from .abstract_api import JsonSettings
 from .m3u import M3UProvider
-from ..utils import APIException, APILoginFailed, Channel
+from ..utils import APIException, APILoginFailed, Channel, u2str
 try:
 	from ..loc import translate as _
 except ImportError:
@@ -56,7 +56,7 @@ class IpStreamOne(JsonSettings, M3UProvider):
 	def getToken(self, code):
 		data = self._getJson(self.token_api, {'k': code})
 		if data['status'] == '1':
-			self._token = "%s-%s" % (data['user'].encode('utf-8'), data['password'].encode('utf-8'))
+			self._token = "%s-%s" % (u2str(data['user']), u2str(data['password']))
 			return self._token
 		else:
 			self._token = None

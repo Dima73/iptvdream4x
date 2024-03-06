@@ -62,7 +62,7 @@ class Playlist(JsonSettings, M3UProvider):
 					raise APIException(e)
 				self._parsePlaylist(lines)
 			else:
-				raise Exception("Bad paramenter %s" % self._m3u_from)
+				raise Exception(_("Bad paramenter %s") % self._m3u_from)
 		except IOError as e:
 			self.trace("error!", e, type(e))
 			raise APIException(e)
