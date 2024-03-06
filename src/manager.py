@@ -486,7 +486,7 @@ class IPtvDreamManager(Screen):
 		def cb(selected):
 			if selected is not None:
 				self.applyKeymap(selected[0])
-		self.session.openWithCallback(cb, ChoiceBox, title=_("Select keymap style") + _(": currrent (%s)") % pluginConfig.keymap_type.value, list=KEYMAPS)
+		self.session.openWithCallback(cb, ChoiceBox, title=_("Select keymap style") + _(": current (%s)") % pluginConfig.keymap_type.value, list=KEYMAPS)
 
 	def applyKeymap(self, style):
 		plugin_path = resolveFilename(SCOPE_CURRENT_PLUGIN, 'Extensions/IPtvDream')
@@ -520,7 +520,7 @@ class IPtvDreamManager(Screen):
 				self.session.openWithCallback(
 					self.restart, MessageBox, _("Restart enigma2 to apply skin changes?"), MessageBox.TYPE_YESNO)
 		desktop = getDesktop(0).size().width() >= 1920 and "(FHD)" or "(HD)"
-		self.session.openWithCallback(cb, ChoiceBox, title=_("Select skin") + desktop + _(": currrent (%s)") % skinManager.current(), list=[(s, s) for s in skinManager.skins])
+		self.session.openWithCallback(cb, ChoiceBox, title=_("Select skin") + desktop + _(": current (%s)") % skinManager.current(), list=[(s, s) for s in skinManager.skins])
 
 	def selectPlaylistNumber(self):
 		def cb(selected):
@@ -529,7 +529,7 @@ class IPtvDreamManager(Screen):
 				self.session.openWithCallback(
 					self.restart, MessageBox, _("Restart enigma2 to apply changes?"), MessageBox.TYPE_YESNO)
 
-		self.session.openWithCallback(cb, ChoiceBox, title=_("Select playlist number") + _(": currrent (%s)") % pluginConfig.max_playlists.value, list=manager.getNumberChoices())
+		self.session.openWithCallback(cb, ChoiceBox, title=_("Select playlist number") + _(": current (%s)") % pluginConfig.max_playlists.value, list=manager.getNumberChoices())
 
 	def selectStartMode(self):
 		def cb(selected):

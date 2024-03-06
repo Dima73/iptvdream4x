@@ -24,7 +24,7 @@ msgstr "+%d мин"
 
 #: manager.py:489 manager.py:523 manager.py:532
 #, python-format
-msgid ": currrent (%s)"
+msgid ": current (%s)"
 msgstr "текущий (%s)"
 
 #: main.py:505
@@ -496,3 +496,12 @@ msgstr "Плейлист %s не найден! Пожалуйста, скопи�
 
 msgid "Failed to parse %s playlist located at %s."
 msgstr "Не удалось выполнить синтаксический анализ плейлиста расположенный в %s."
+
+msgid "Bad paramenter %s"
+msgstr "Неверный параметр %s"
+
+msgid "Marked channels (A)"
+msgstr "Маркированные каналы (А)"
+
+msgid "Default"
+msgstr "Дефолт"

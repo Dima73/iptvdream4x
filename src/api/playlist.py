@@ -99,10 +99,10 @@ class Playlist(JsonSettings, M3UProvider):
 			]),
 			'playlist_url': ConfString(_("Playlist url"), ""),
 			'archive': ConfSelection(_("Enable archive"), 'all', [
-				('all', "All channels"), ('tagged', "Marked channels (A)")
+				('all', _("All channels")), ('tagged', _("Marked channels (A)"))
 			]),
 			'archive_url': ConfSelection(_("Archive url type"), 'default', [
-				('default', "Default"), ('flusonic', "Flusonic"),
+				('default', _("Default")), ('flusonic', "Flusonic"),
 			]),
 			'epg_url': ConfString(_("EPG-json url"), "http://technic.cf/epg-soveni")
 		}
