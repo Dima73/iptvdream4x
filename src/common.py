@@ -47,7 +47,7 @@ def safecb(callback):
 class DownloadException(Exception):
 	"""Twisted download exception"""
 	def __init__(self, message):
-		time_out = _("time out")
+		time_out = _("timed out")
 		message = _(message)
 		Exception.__init__(self, message)
 

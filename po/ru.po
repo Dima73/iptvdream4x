@@ -488,7 +488,7 @@ msgid "from url"
 msgstr "по ссылке"
 
 #: common.py:50
-msgid "time out"
+msgid "timed out"
 msgstr "тайм-аут!"
 
 msgid "%s playlist not found! Please copy your playlist to %s."

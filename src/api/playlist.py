@@ -77,7 +77,8 @@ class Playlist(JsonSettings, M3UProvider):
 			archive = name.endswith('(A)') or rec
 		else:
 			archive = True
-		return Channel(hash(url), name, num, archive), {'tvg': tvg, 'url': url, 'logo': logo}
+		cid = self._m3u_from == 'file' and hash(url) or num
+		return Channel(cid, name, num, archive), {'tvg': tvg, 'url': url, 'logo': logo}
 
 	def getStreamUrl(self, cid, pin, time=None):
 		url = self.channels_data[cid]['url']

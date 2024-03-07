@@ -23,8 +23,8 @@
     <widget alphatest="blend" name="picon" position="1571,80" size="150,90" transparent="1" zPosition="3" />
     <ePixmap alphatest="blend" pixmap="IPtvDreamFHD/iptvdream.png" position="1600,158" size="133,25" zPosition="4" />
     <widget backgroundColor="#00323232" font="Regular;37" foregroundColor="#00ffffff" name="currentTime" position="72,81" size="97,48" transparent="1" />
-    <widget backgroundColor="#00323232" font="Regular;37" foregroundColor="#00ffffff" name="currentName" noWrap="1" position="178,81" size="1190,46" transparent="1" zPosition="21" />
-    <widget backgroundColor="#00323232" font="Regular;34" foregroundColor="#00ffffff" halign="right" name="currentDuration" position="1384,81" size="146,48" transparent="1" valign="bottom" />
+    <widget backgroundColor="#00323232" font="Regular;37" foregroundColor="#00ffffff" name="currentName" noWrap="1" position="178,81" size="1170,42" transparent="1" zPosition="21" />
+    <widget backgroundColor="#00323232" font="Regular;34" foregroundColor="#00ffffff" halign="right" name="currentDuration" position="1364,81" size="166,48" transparent="1" valign="bottom" />
     <widget foregroundColor="#00ffa25d" name="progressBar" position="74,133" size="1453,11" transparent="1" zPosition="2" />
     <widget backgroundColor="#00323232" font="Regular;37" foregroundColor="#00dedede" name="nextTime" position="72,150" size="98,48" transparent="1" />
     <widget backgroundColor="#00323232" font="Regular;37" foregroundColor="#00dedede" name="nextName" noWrap="1" position="178,150" size="1190,46" transparent="1" zPosition="21" />
@@ -84,7 +84,7 @@
     <widget backgroundColor="#0004030c" font="Regular;53" foregroundColor="#00ffffff" halign="center" name="caption" position="588,35" shadowColor="#000064c7" size="689,65" transparent="1" />
     <widget backgroundColor="#15000000" backgroundColorSelected="#000a1822" colorEventProgressbar="#005DB5" colorEventProgressbarBorder="#00bbbbbb" colorEventProgressbarBorderSelected="#FFC387" colorServiceDescription="#C1E3FF" colorServiceDescriptionSelected="#FFC387" colorServicePlaying="#00ff0000" colorServicePlayingSelected="#00ff880a" foregroundColor="#00ffffff" foregroundColorSelected="#00ff880a" name="list" picServiceArchive="IPtvDream/rec.png" position="84,161" scrollbarMode="showOnDemand" serviceInfoFont="Regular;32" serviceItemHeight="42" serviceNameFont="Regular;35" serviceNumberFont="Regular;35" size="1071,798" transparent="1" />
     <widget backgroundColor="#0004030c" font="Regular;33" foregroundColor="#00e5b243" halign="center" name="epgName" position="1193,563" size="645,38" transparent="1" />
-    <widget backgroundColor="#0004030c" font="Regular;29" foregroundColor="#00ffffff" name="epgTime" position="1193,608" size="318,33" transparent="1" />
+    <widget backgroundColor="#0004030c" font="Regular;29" foregroundColor="#00ffffff" name="epgTime" position="1193,608" size="338,33" transparent="1" />
     <widget backgroundColor="#00152f44" borderColor="#00868686" borderWidth="1" foregroundColor="#00ffa25d" name="epgProgress" position="1548,618" size="210,18" transparent="1" />
     <widget backgroundColor="#0004030c" font="Regular;27" foregroundColor="#00dedede" name="epgDescription" position="1193,656" size="653,315" transparent="1" />
     <ePixmap alphatest="blend" pixmap="IPtvDreamFHD/buttons/red.png" position="102,1020" size="28,28" />
