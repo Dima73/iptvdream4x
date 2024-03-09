@@ -20,6 +20,11 @@ try:
 except ImportError:
 	pass
 
+try:
+	from Plugins.Extensions.TMBD.plugin import TMBD
+except:
+	TMBD = None
+
 # enigma2 imports
 from Components.Sources.List import List as ListSource
 from Components.Sources.Boolean import Boolean
@@ -924,6 +929,7 @@ class IPtvDreamChannels(Screen):
 		self["epgNextName"] = Label()
 		self["epgNextDescription"] = Label()
 
+		self.current_event_info = ""
 		self["epgProgress"] = Slider(0, 100)
 		self["progress"] = self._progress = EpgProgress()
 		self._progress.onChanged.append(lambda value: self["epgProgress"].setValue(int(100 * value)))
@@ -1109,6 +1115,7 @@ class IPtvDreamChannels(Screen):
 	def selectionChanged(self):
 		channel = self.getSelected()
 		trace("selection =", channel)
+		self.current_event_info = ""
 
 		if self.mode == self.GROUPS or channel is None:
 			self["channelName"].setText("")
@@ -1122,6 +1129,8 @@ class IPtvDreamChannels(Screen):
 				duration =_("+%d min") % int(curr.timeLeft(syncTime()) / 60)
 				self["epgTime"].setText("%s - %s (%s)" % (curr.begin.strftime("%H:%M"), curr.end.strftime("%H:%M"), duration))
 				self["epgName"].setText(curr.name)
+				if curr.name:
+					self.current_event_info = curr.name
 				self["epgName"].show()
 				self["epgTime"].show()
 				self["epgDescription"].setText(curr.description)
@@ -1204,6 +1213,8 @@ class IPtvDreamChannels(Screen):
 				]
 				if current.has_archive:
 					actions += [(_('Open archive for "%s"') % current.name, self.showEpgList)]
+				if TMBD and self.current_event_info:
+					actions += [(_("Search in TMBD"), self.runTMBD)]
 		if self.mode == self.FAV:
 			if current:
 				actions += [
@@ -1211,6 +1222,8 @@ class IPtvDreamChannels(Screen):
 				]
 				if current.has_archive:
 					actions += [(_('Open archive for "%s"') % current.name, self.showEpgList)]
+				if TMBD and self.current_event_info:
+					actions += [(_("Search in TMBD"), self.runTMBD)]
 				if not self.edit_mode:
 					actions += [(_("Enter edit mode"), self.confirmStartEditing)]
 				else:
@@ -1225,6 +1238,10 @@ class IPtvDreamChannels(Screen):
 				func()
 		if actions:
 			self.session.openWithCallback(cb, ChoiceBox, _("Context menu"), actions)
+
+	def runTMBD(self):
+		if TMBD and self.current_event_info:
+			self.session.open(TMBD, self.current_event_info, False)
 
 	def sortBy(self, what):
 		channel = self.getSelected()
@@ -1419,7 +1436,7 @@ class IPtvDreamEpg(Screen):
 				"nextDay": self.nextDay,
 				"prevDay": self.prevDay,
 				"green": self.showInfo,
-				"showInfo": self.showInfo,
+				"showInfo": self.runTMBD,
 				"red": self.archive
 			}, -1)
 
@@ -1513,6 +1530,17 @@ class IPtvDreamEpg(Screen):
 		if self.db.channels[self.cid].has_archive and entry.begin < syncTime():
 			self.close(self.cid, entry.begin)
 
+	def runTMBD(self):
+		entry = self.list.getCurrent()
+		if not entry:
+			return
+		if TMBD:
+			eventname = entry[0].name
+			if eventname:
+				self.session.open(TMBD, eventname, False)
+		else:
+			self.showInfo()
+
 	def showInfo(self):
 		entry = self.list.getCurrent()
 		if not entry:
@@ -1597,10 +1625,11 @@ class IPtvDreamEpgInfo(Screen):
 			self["btn_red"].hide()
 			self["key_red"].hide()
 
-		self["actions"] = ActionMap(["OkCancelActions", "DirectionActions", "ColorActions"], {
+		self["actions"] = ActionMap(["OkCancelActions", "DirectionActions", "ColorActions", "IPtvDreamChannelListActions"], {
 			"cancel": self.close,
 			"red": self.playArchive,
 			"ok": self.close,
+			"showEPGList": self.runTMBD,
 			"up": self["epgDescription"].pageUp,
 			"down": self["epgDescription"].pageDown
 		}, -1)
@@ -1608,6 +1637,12 @@ class IPtvDreamEpgInfo(Screen):
 	def initGui(self):
 		self._main_part.updateLayout()
 		self._progress.setEpg(self.entry, self.shift)
+
+	def runTMBD(self):
+		if TMBD:
+			eventname = self.entry.name
+			if eventname:
+				self.session.open(TMBD, eventname, False)
 
 	def hasArchive(self):
 		return self.channel.has_archive and self.entry.begin < syncTime()

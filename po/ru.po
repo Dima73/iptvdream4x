@@ -505,3 +505,6 @@ msgstr "Маркированные каналы (А)"
 
 msgid "Default"
 msgstr "Дефолт"
+
+msgid "Search in TMBD"
+msgstr "Поиск в TMBD"
