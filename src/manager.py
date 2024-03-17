@@ -48,7 +48,9 @@ from .main import IPtvDreamStreamPlayer, IPtvDreamChannels
 PLAYERS = [('1', "enigma2 ts (1)"), ('4097', "gstreamer (4097)"), ('5002', "exteplayer3 (5002)")]
 KEYMAPS = [('enigma', 'enigma'), ('neutrino', 'neutrino')]
 pluginConfig.keymap_type = ConfigSelection(KEYMAPS)
-
+pluginConfig.show_event_progress_in_servicelist = ConfigYesNo(default=True)
+pluginConfig.show_number_in_servicelist = ConfigYesNo(default=False)
+pluginConfig.alternative_number_in_servicelist = ConfigYesNo(default=False)
 
 class SkinManager(object):
 	SKIN_FILE = 'iptvdream.xml'
@@ -479,8 +481,24 @@ class IPtvDreamManager(Screen):
 			(_("Choose skin"), self.selectSkin),
 			(_("Additional playlists number"), self.selectPlaylistNumber),
 			(_("Start mode"), self.selectStartMode),
+			(_("Show event-progress in servicelist") + _(": current (%s)") % (pluginConfig.show_event_progress_in_servicelist.value and _("yes") or _("no")), self.selectProgressMode),
+			(_("Show number service in servicelist") + _(": current (%s)") % (pluginConfig.show_number_in_servicelist.value and _("yes") or _("no")), self.selectNumberMode),
 		]
+		#if pluginConfig.show_number_in_servicelist.value:
+		actions += [(_("Alternative numbering mode") + _(": current (%s)") % (pluginConfig.alternative_number_in_servicelist.value and _("yes") or _("no")), self.alternativeNumberMode,)]
 		self.session.openWithCallback(cb, ChoiceBox, _("Context menu"), actions)
+
+	def selectProgressMode(self):
+		pluginConfig.show_event_progress_in_servicelist.value = not pluginConfig.show_event_progress_in_servicelist.value
+		pluginConfig.show_event_progress_in_servicelist.save()
+
+	def selectNumberMode(self):
+		pluginConfig.show_number_in_servicelist.value = not pluginConfig.show_number_in_servicelist.value
+		pluginConfig.show_number_in_servicelist.save()
+
+	def alternativeNumberMode(self):
+		pluginConfig.alternative_number_in_servicelist.value = not pluginConfig.alternative_number_in_servicelist.value
+		pluginConfig.alternative_number_in_servicelist.save()
 
 	def selectKeymap(self):
 		def cb(selected):
@@ -536,7 +554,7 @@ class IPtvDreamManager(Screen):
 			if selected is not None:
 				manager.setStartMode(selected[1])
 
-		self.session.openWithCallback(cb, ChoiceBox, title=_("Select start mode"), list=manager.getStartModeChoices())
+		self.session.openWithCallback(cb, ChoiceBox, title=_("Select start mode") + _(": current (%s)") % (pluginConfig.start_mode.value == "3" and _("Favourites when not empty") or _("Groups")), list=manager.getStartModeChoices())
 
 	def restart(self, ret):
 		if ret:

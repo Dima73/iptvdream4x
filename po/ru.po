@@ -25,7 +25,7 @@ msgstr "+%d мин"
 #: manager.py:489 manager.py:523 manager.py:532
 #, python-format
 msgid ": current (%s)"
-msgstr "текущий (%s)"
+msgstr ": текущее (%s)"
 
 #: main.py:505
 msgid "Actions"
@@ -508,3 +508,12 @@ msgstr "Дефолт"
 
 msgid "Search in TMBD"
 msgstr "Поиск в TMBD"
+
+msgid "Show event-progress in servicelist"
+msgstr "Показать прогресс-бар в списке сервисов"
+
+msgid "Show number service in servicelist"
+msgstr "Показать номер канала в списке сервисов"
+
+msgid "Alternative numbering mode"
+msgstr "Альтернативный режим нумерации каналов"

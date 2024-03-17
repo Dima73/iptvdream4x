@@ -209,6 +209,7 @@ class AutoAudioSelection(Screen):
 
 class NumberEnter(Screen):
 	TIMEOUT = 1800
+	NEXT_TIMEOUT = 2300
 
 	def __init__(self, session, number):
 		Screen.__init__(self, session)
@@ -245,7 +246,8 @@ class NumberEnter(Screen):
 		self.close(int(self["number"].text))
 
 	def keyNumberGlobal(self, number):
-		self.timer.start(self.TIMEOUT)
+		self.timer.stop()
+		self.timer.start(self.NEXT_TIMEOUT)
 		self["number"].text += str(number)
 		if len(self["number"].text) > 5:
 			self.keyOK()

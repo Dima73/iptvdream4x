@@ -135,7 +135,7 @@ def toDate(t):
 
 
 class EPG(object):
-	__slots__ = ('begin', 'end', 'name', 'description')
+	__slots__ = ('begin', 'end', 'end_timestamp', 'name', 'description')
 
 	def __init__(self, begin, end, name, description=""):
 		"""
@@ -146,6 +146,7 @@ class EPG(object):
 		"""
 		self.begin = datetime.fromtimestamp(begin)
 		self.end = datetime.fromtimestamp(end)
+		self.end_timestamp = int(end)
 		self.name = name
 		self.description = description
 
@@ -458,6 +459,7 @@ class Channel(EPGDB):
 		self.has_archive = has_archive
 		self.is_protected = is_protected
 		self.lastUpdateFailed = None
+		self.alt_number = 0
 
 	def __str__(self):
 		return "Channel(%s: %s)" % (self.cid, self.name)
