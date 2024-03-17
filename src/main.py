@@ -406,6 +406,7 @@ class IPtvDreamStreamPlayer(
 				self.epgTimer.start(curr.timeLeftMilliseconds(time) + 1000)
 			except OverflowError as of:
 				trace("Overflow error - retry 5 sec.", of)
+				self["currentDuration"].setText("")
 				self.epgTimer.start(5000)
 			else:
 				self["currentDuration"].setText(_("+%d min") % int(curr.timeLeft(time) / 60))
@@ -1040,18 +1041,22 @@ class IPtvDreamChannels(Screen):
 		assert entry is not None
 		return HistoryEntry(self.mode, self.gid, 0, entry.cid, self.list.getSelectedIndex())
 
-	def recoverState(self, state):
+	def recoverState(self, state, same=False):
 		"""
 		:param HistoryEntry state:
 		"""
 		self.mode, self.gid = state.mode, state.gid
 		if self.mode == self.GROUPS:
 			self.fillGroupsList()
-			if self.saved_state:
+			if same:
+				self.list.moveToIndex(state.gr_idx)
+			elif self.saved_state:
 				self.list.moveToIndex(self.saved_state.gr_idx)
 		else:
 			self.fillList()
-			if self.saved_state:
+			if same:
+				self.list.moveToIndex(state.ch_idx)
+			elif self.saved_state:
 				self.list.moveToIndex(self.saved_state.ch_idx)
 
 	def exit(self):
@@ -1432,7 +1437,7 @@ class IPtvDreamChannels(Screen):
 	def historyNext(self):
 		h = self.history.historyNext()
 		if h is not None:
-			self.recoverState(h)
+			self.recoverState(h, True)
 			return self.getCurrent()
 		else:
 			return None
@@ -1440,7 +1445,7 @@ class IPtvDreamChannels(Screen):
 	def historyPrev(self):
 		h = self.history.historyPrev()
 		if h is not None:
-			self.recoverState(h)
+			self.recoverState(h, True)
 			return self.getCurrent()
 		else:
 			return None

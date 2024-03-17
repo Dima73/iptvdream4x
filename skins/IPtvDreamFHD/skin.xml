@@ -84,8 +84,8 @@
     <widget backgroundColor="#0004030c" font="Regular;53" foregroundColor="#00ffffff" halign="center" name="caption" position="588,35" shadowColor="#000064c7" size="689,65" transparent="1" />
     <widget backgroundColor="#15000000" backgroundColorSelected="#000a1822" colorEventProgressbar="#005DB5" colorEventProgressbarBorder="#00bbbbbb" colorEventProgressbarBorderSelected="#FFC387" colorServiceDescription="#C1E3FF" colorServiceDescriptionSelected="#FFC387" colorServicePlaying="#00ff0000" colorServicePlayingSelected="#00ff880a" foregroundColor="#00ffffff" foregroundColorSelected="#00ff880a" name="list" picServiceArchive="IPtvDream/rec.png" position="84,161" scrollbarMode="showOnDemand" serviceInfoFont="Regular;32" serviceItemHeight="42" serviceNameFont="Regular;35" serviceNumberFont="Regular;35" size="1071,798" transparent="1" />
     <widget backgroundColor="#0004030c" font="Regular;33" foregroundColor="#00e5b243" halign="center" name="epgName" position="1193,563" size="645,38" transparent="1" />
-    <widget backgroundColor="#0004030c" font="Regular;29" foregroundColor="#00ffffff" name="epgTime" position="1193,608" size="338,33" transparent="1" />
-    <widget backgroundColor="#00152f44" borderColor="#00868686" borderWidth="1" foregroundColor="#00ffa25d" name="epgProgress" position="1548,618" size="210,18" transparent="1" />
+    <widget backgroundColor="#0004030c" font="Regular;29" foregroundColor="#00ffffff" name="epgTime" position="1193,608" size="358,33" transparent="1" />
+    <widget backgroundColor="#00152f44" borderColor="#00868686" borderWidth="1" foregroundColor="#00ffa25d" name="epgProgress" position="1588,618" size="210,18" transparent="1" />
     <widget backgroundColor="#0004030c" font="Regular;27" foregroundColor="#00dedede" name="epgDescription" position="1193,656" size="653,315" transparent="1" />
     <ePixmap alphatest="blend" pixmap="IPtvDreamFHD/buttons/red.png" position="102,1020" size="28,28" />
     <ePixmap alphatest="blend" pixmap="IPtvDreamFHD/buttons/green.png" position="476,1020" size="28,28" />
