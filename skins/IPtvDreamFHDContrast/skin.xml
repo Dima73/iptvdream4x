@@ -129,8 +129,8 @@
     </widget>
     <widget backgroundColor="#0004030c" font="Regular;33" foregroundColor="#00e5b243" halign="center" name="epgName" position="1193,563" size="645,38" transparent="1" />
     <widget backgroundColor="#0004030c" font="Regular;29" foregroundColor="#00ffffff" name="epgTime" position="1193,608" size="278,33" transparent="1" />
-    <widget backgroundColor="#0004030c" font="Regular;29" foregroundColor="#00ffffff" name="epgDuration" position="1488,608" size="190,33" transparent="1" />
-    <widget backgroundColor="#0004030c" borderColor="#00bbbbbb" borderWidth="1" foregroundColor="#00005db5" name="epgProgress" position="1680,612" size="191,23" transparent="1" />
+    <widget backgroundColor="#0004030c" font="Regular;29" foregroundColor="#00ffffff" name="epgDuration" position="1488,608" size="220,33" transparent="1" />
+    <widget backgroundColor="#0004030c" borderColor="#00bbbbbb" borderWidth="1" foregroundColor="#00005db5" name="epgProgress" position="1710,612" size="191,23" transparent="1" />
     <widget backgroundColor="#0004030c" font="Regular;27" foregroundColor="#0000ffff" name="epgDescription" position="1193,656" size="653,315" transparent="1" />
     <widget alphatest="blend" name="btn_red" pixmap="IPtvDreamFHD/buttons/red.png" position="540,1020" size="28,28" />
     <widget backgroundColor="#0004030c" font="Regular;34" foregroundColor="#00ffffff" name="key_red" position="585,1016" size="346,36" transparent="1" zPosition="1" />
