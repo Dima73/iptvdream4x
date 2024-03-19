@@ -77,14 +77,16 @@ class OTTProvider(OfflineFavourites, JsonSettings):
 			'apiAction': 'getUserChannels',
 			'resultType': 'tree',
 		})
+		number = 0
 		for g in data['userChannelsTree']:
 			gid = int(g['groupId'])
 			channels = []
 			for c in g['channelsList']:
 				cid = int(c['channelId'])
+				number += 1
 				channel = Channel(
 					cid, u2str(c['channelName']),
-					int(c['sortOrder']), int(c['archiveLen']) > 0, bool(int(c['isPorno']))
+					number, int(c['archiveLen']) > 0, bool(int(c['isPorno']))
 				)
 				self.channels[cid] = channel
 				self.channels_data[cid] = {

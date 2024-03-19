@@ -189,14 +189,18 @@ class AbstractStream(AbstractAPI):
 	def setChannelsList(self):
 		pass
 
+	def isFavCid(self, cid):
+		return self.favourites.count(cid)
+
 	def addFav(self, cid):
 		if not self.favourites.count(cid):
 			self.favourites.append(cid)
 			self.uploadFavourites(self.favourites)
 
 	def rmFav(self, cid):
-		self.favourites.remove(cid)
-		self.uploadFavourites(self.favourites)
+		if cid in self.favourites:
+			self.favourites.remove(cid)
+			self.uploadFavourites(self.favourites)
 
 	def setFavourites(self, favourites):
 		self.favourites = favourites
