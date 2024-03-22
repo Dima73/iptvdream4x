@@ -78,9 +78,13 @@ class OTTProvider(OfflineFavourites, JsonSettings):
 			'resultType': 'tree',
 		})
 		number = 0
+		favorites = False
 		for g in data['userChannelsTree']:
 			gid = int(g['groupId'])
 			channels = []
+			if gid > 0 and not favorites:
+				favorites = True
+				number = 0
 			for c in g['channelsList']:
 				cid = int(c['channelId'])
 				number += 1

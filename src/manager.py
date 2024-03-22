@@ -24,6 +24,7 @@ from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
 from Screens.InputBox import InputBox
 from Screens.ChoiceBox import ChoiceBox
+from Screens.MinuteInput import MinuteInput
 from Components.config import config, configfile, ConfigSubsection, ConfigSubDict,\
 	ConfigText, ConfigYesNo, ConfigSelection, ConfigInteger
 from Components.ActionMap import ActionMap
@@ -51,6 +52,7 @@ pluginConfig.keymap_type = ConfigSelection(KEYMAPS)
 pluginConfig.show_event_progress_in_servicelist = ConfigYesNo(default=True)
 pluginConfig.show_number_in_servicelist = ConfigYesNo(default=False)
 pluginConfig.alternative_number_in_servicelist = ConfigYesNo(default=False)
+pluginConfig.numbers_history = ConfigInteger(10, (1, 30))
 
 class SkinManager(object):
 	SKIN_FILE = 'iptvdream.xml'
@@ -368,7 +370,10 @@ class Manager(object):
 		trace("Config generated for", self.config.keys())
 
 	def isIgnored(self, name):
-		return name.startswith('M3U-Playlist-') and int(name[-1]) > self.max_playlists
+		try:
+			return name.startswith('M3U-Playlist-') and int(name[-1]) > self.max_playlists
+		except:
+			return True
 
 	def getNumberChoices(self):
 		return [(str(n), n) for n in range(4)]
@@ -486,6 +491,7 @@ class IPtvDreamManager(Screen):
 		]
 		#if pluginConfig.show_number_in_servicelist.value:
 		actions += [(_("Alternative numbering mode") + _(": current (%s)") % (pluginConfig.alternative_number_in_servicelist.value and _("yes") or _("no")), self.alternativeNumberMode,)]
+		actions += [(_("Count history (1 - off/max - 30)") + _(": current (%s)") % pluginConfig.numbers_history.value, self.numbersHistoryMode,)]
 		self.session.openWithCallback(cb, ChoiceBox, _("Context menu"), actions)
 
 	def selectProgressMode(self):
@@ -499,6 +505,13 @@ class IPtvDreamManager(Screen):
 	def alternativeNumberMode(self):
 		pluginConfig.alternative_number_in_servicelist.value = not pluginConfig.alternative_number_in_servicelist.value
 		pluginConfig.alternative_number_in_servicelist.save()
+
+	def numbersHistoryMode(self):
+		def cb(num):
+			if num is not None and num and num < 31:
+				pluginConfig.numbers_history.value = num
+				pluginConfig.numbers_history.save()
+		self.session.openWithCallback(cb, MinuteInput,basemins=pluginConfig.numbers_history.value)
 
 	def selectKeymap(self):
 		def cb(selected):

@@ -690,6 +690,8 @@ class ChannelList(MenuList):
 			index = self.allindex[cid]
 		except KeyError:
 			return
+		#if self.channelsMode != 1 and self.alternativeNumber:
+		#	channel[0][0].alt_number = self.list[index][0][0].alt_number
 		self.list[index] = self.buildChannelEntry(channel)
 		self.l.invalidateEntry(index)
 
@@ -759,32 +761,33 @@ class ChannelList(MenuList):
 				xoffset += 60
 			text = self.channelsMode != 1 and self.alternativeNumber and str(c.alt_number) or str(c.number)
 			lst.append(
-				(eListboxPythonMultiContent.TYPE_TEXT, 0, 0, xoffset-5, self.listItemHeight,
+				(eListboxPythonMultiContent.TYPE_TEXT, 0, 0, xoffset - 5, self.listItemHeight,
 					2, RT_HALIGN_RIGHT | RT_VALIGN_CENTER, text))
 
 		if self.pixmapArchive:
 			width = self.pixmapArchive.size().width()
 			height = self.pixmapArchive.size().height()
-			if c.has_archive:
+			if c.has_archive and e:
 				lst.append(
 					(eListboxPythonMultiContent.TYPE_PIXMAP_ALPHATEST,
 						xoffset, (self.listItemHeight - height) // 2, width, height, self.pixmapArchive))
-			xoffset += width+5
+			xoffset += width + 5
 
 		if self.showEpgProgress:
 			width = 52
 			height = 6
-			if e and e.end_timestamp >= int(time()):
-				percent = e.percent(syncTime(), 100)
-				lst.extend([
-					(eListboxPythonMultiContent.TYPE_PROGRESS,
-						xoffset+1, (self.listItemHeight-height) // 2, width, height,
-						percent, 0, self.col['colorEventProgressbar'], self.col['colorEventProgressbarSelected']),
-					(eListboxPythonMultiContent.TYPE_PROGRESS,
-						xoffset, (self.listItemHeight-height) // 2 - 1, width+2, height+2,
-						0, 1, self.col['colorEventProgressbarBorder'], self.col['colorEventProgressbarBorderSelected'])
-				])
-			xoffset += width+7
+			if e:
+				if (e.end_timestamp >= int(time())) or (abs(e.end_timestamp - int(time())) < 60):
+					percent = e.percent(syncTime(), 100)
+					lst.extend([
+						(eListboxPythonMultiContent.TYPE_PROGRESS,
+							xoffset + 1, (self.listItemHeight-height) // 2, width, height,
+							percent, 0, self.col['colorEventProgressbar'], self.col['colorEventProgressbarSelected']),
+						(eListboxPythonMultiContent.TYPE_PROGRESS,
+							xoffset, (self.listItemHeight-height) // 2 - 1, width + 2, height + 2,
+							0, 1, self.col['colorEventProgressbarBorder'], self.col['colorEventProgressbarBorderSelected'])
+					])
+			xoffset += width + 7
 
 		text = str(c.name)
 		width = self.calculateWidth(text, 0)
@@ -796,7 +799,7 @@ class ChannelList(MenuList):
 			lst.append(
 				(eListboxPythonMultiContent.TYPE_TEXT, xoffset, 0, width, self.listItemHeight,
 					0, defaultFlag, text, self.col['colorServicePlaying'], self.col['colorServicePlayingSelected']))
-		xoffset += width+10
+		xoffset += width + 10
 
 		if e:
 			text = '(%s)' % e.name
@@ -816,6 +819,36 @@ class History(object):
 
 	def isEmpty(self):
 		return len(self._history) == 0
+
+	def counts(self):
+		return len(self._history)
+
+	def replace(self, curr):
+		add = None
+		if self.counts() > 1:
+			for s in self._history:
+				if curr and curr == s.cid:
+					add = s
+					self._history.remove(s)
+					break
+			if add:
+				self._history.append(add)
+
+	def clear(self):
+		if self.counts() > 1:
+			self._history = self._history[-1:]
+			self._index = 0
+			return True
+		return False
+
+	def delCurrent(self, curr):
+		if self.counts() > 1:
+			for s in self._history:
+				if curr and curr == s.cid:
+					self._history.remove(s)
+					self._index -= 1
+					return True
+		return False
 
 	def append(self, val):
 		while len(self._history) > self._index + 1:
@@ -919,13 +952,13 @@ class IPtvDreamChannels(Screen):
 	:type saved_state: Optional[HistoryEntry]
 	"""
 
-	GROUPS, ALL, GROUP, FAV = range(4)
+	GROUPS, ALL, GROUP, FAV, HISTORY = range(5)
 
 	def __init__(self, session, db, player_ref):
 		Screen.__init__(self, session)
 
 		trace("channels init")
-		self.history = History(10)
+		self.history = History(config.plugins.IPtvDream.numbers_history.value)
 		self.db = db  # type: AbstractStream
 		self.player_ref = player_ref
 		from .manager import manager
@@ -934,7 +967,7 @@ class IPtvDreamChannels(Screen):
 		self["caption"] = Label(_("Channel Selection"))
 		self["key_red"] = Label(_("All"))
 		self["key_green"] = Label(_("Groups"))
-		self["key_yellow"] = Label(_("Add"))
+		self["key_yellow"] = Label("")
 		self["key_blue"] = Label(_("Favourites"))
 
 		self.list = self["list"] = ChannelList()
@@ -978,7 +1011,7 @@ class IPtvDreamChannels(Screen):
 				"ok": self.ok,
 				"showAll": self.showAll,
 				"showGroups": self.showGroups,
-				"addFavourites": self.addRemoveFavourites,
+				"addFavourites": self.openHistory,
 				"showFavourites": self.showFavourites,
 				"contextMenu": self.showMenu,
 				"showEPGList": self.showEpgList,
@@ -997,7 +1030,7 @@ class IPtvDreamChannels(Screen):
 		self.mode = start_mode
 		self.gid = None
 		self.saved_state = None
-
+		self.historyList = []
 		self.edit_mode = False
 		self.marked = False  # Whether current entry is marked (in edit mode)
 		self["move_actions"] = ActionMap(
@@ -1022,9 +1055,16 @@ class IPtvDreamChannels(Screen):
 		trace("Channels list shown")
 		self.saved_state = None
 		if not self.history.isEmpty():
+			if self.history.counts() > 1:
+				self["key_yellow"].setText(_("History"))
+			else:
+				self.historyList = []
 			curr = self.history.now()
 			if curr:
 				self.saved_state = self.history.now().copy()
+		else:
+			self.historyList = []
+			self["key_yellow"].setText("")
 
 	def saveQuery(self):
 		trace("save query")
@@ -1076,7 +1116,15 @@ class IPtvDreamChannels(Screen):
 		else:
 			idx = self.list.getSelectedIndex()
 			cid = entry.cid
-			self.history.append(HistoryEntry(self.mode, self.gid, 0, cid, idx))
+			if self.mode == self.HISTORY:
+				self.history.replace(cid)
+				self.openHistory()
+			else:
+				self.history.append(HistoryEntry(self.mode, self.gid, 0, cid, idx))
+			if self.history.counts() > 1:
+				self["key_yellow"].setText(_("History"))
+			else:
+				self["key_yellow"].setText("")
 			self.close(cid, time)
 
 	@timeit
@@ -1130,6 +1178,10 @@ class IPtvDreamChannels(Screen):
 				for s in group:
 					num += 1
 					s.alt_number = num
+					try:
+						self.db.channels[s.cid].alt_number = num 
+					except:
+						pass
 			self.setChannels(group)
 			title.append(self.db.groups[self.gid].title)
 		elif self.mode == self.ALL:
@@ -1144,12 +1196,16 @@ class IPtvDreamChannels(Screen):
 					s.alt_number = num
 			self.setChannels(fav)
 			title.append(_("Favourites"))
-
+		elif self.mode == self.HISTORY:
+			his = self.historyList
+			if his and self.alternativeNumber:
+				num = 0
+				for s in his:
+					num += 1
+					s.alt_number = num
+			self.setChannels(his)
+			title.append(_("History list"))
 		self.setTitle(" / ".join(title))
-		if self.mode == self.FAV:
-			self["key_yellow"].setText(_("Remove"))
-		else:
-			self["key_yellow"].setText(_("Add"))
 
 	def selectionChanged(self):
 		channel = self.getSelected()
@@ -1256,6 +1312,20 @@ class IPtvDreamChannels(Screen):
 	def prevGroup(self):
 		self.npGroup(-1)
 
+	def openHistory(self):
+		self.historyList = []
+		history = [entry.cid for entry in self.history._history]
+		if len(history) > 1:
+			for cid in reversed(history):
+				try:
+					self.historyList.append(self.db.channels[cid])
+				except:
+					trace("error history cid ", cid)
+			if self.historyList:
+				self.mode = self.HISTORY
+				self.fillList()
+				self.list.moveToIndex(0)
+
 	def addRemoveFavourites(self):
 		channel = self.getSelected()
 		if not channel:
@@ -1266,32 +1336,66 @@ class IPtvDreamChannels(Screen):
 		elif self.mode != self.GROUPS:
 			self.db.addFav(channel.cid)
 
+	def delHistoryCurrrent(self):
+		channel = self.getSelected()
+		if not channel:
+			return
+		if self.mode == self.HISTORY:
+			if self.history.delCurrent(channel.cid):
+				if self.history.counts() > 1:
+					self.openHistory()
+				else:
+					if self.saved_state is not None:
+						self.recoverState(self.saved_state)
+					else:
+						self.showGroups()
+					self["key_yellow"].setText("")
+					self.close(None)
+
+	def clearHistoryList(self):
+		channel = self.getSelected()
+		if not channel:
+			return
+		if self.mode == self.HISTORY:
+			if self.history.clear():
+				if self.saved_state is not None:
+					self.recoverState(self.saved_state)
+				else:
+					self.showGroups()
+				self["key_yellow"].setText("")
+				self.close(None)
+
 	def showMenu(self):
 		actions = []
 		current = self.getSelected()
-		if self.mode in [self.ALL, self.GROUP]:
-			if current and TMBD and self.current_event_info:
-				actions += [(_("Search in TMBD"), self.runTMBD)]
-			actions += [
-				(_("Sort by number"), self.sortByNumber),
-				(_("Sort by name"), self.sortByName),
-			]
-			if current:
-				actions += [
-					(_('Add "%s" to favourites') % current.name, self.addRemoveFavourites),
-				]
-				if current.has_archive:
-					actions += [(_('Open archive for "%s"') % current.name, self.showEpgList)]
-		if self.mode == self.FAV:
+		if self.mode == self.HISTORY:
 			if current:
 				if TMBD and self.current_event_info:
 					actions += [(_("Search in TMBD"), self.runTMBD)]
-				actions += [
-					(_('Remove "%s" from favourites') % current.name, self.addRemoveFavourites),
-				]
+				if self.history.counts() > 1:
+					curr = self.history.now()
+					if curr and curr.cid != current.cid:
+						actions += [(_('Delete "%s" from history list') % current.name, self.delHistoryCurrrent)]
+					actions += [(_('Clear history list'), self.clearHistoryList)]
 				if current.has_archive:
 					actions += [(_('Open archive for "%s"') % current.name, self.showEpgList)]
+		elif self.mode in [self.ALL, self.GROUP]:
+			if current and TMBD and self.current_event_info:
+				actions += [(_("Search in TMBD"), self.runTMBD)]
+			if current and not self.db.isFavCid(current.cid):
+				actions += [(_('Add "%s" to favourites') % current.name, self.addRemoveFavourites),]
+				if current.has_archive:
+					actions += [(_('Open archive for "%s"') % current.name, self.showEpgList)]
+			actions += [(_("Sort by number"), self.sortByNumber), (_("Sort by name"), self.sortByName),]
+		elif self.mode == self.FAV:
+			if current:
 				curr = self.history.now()
+				if TMBD and self.current_event_info:
+					actions += [(_("Search in TMBD"), self.runTMBD)]
+				if curr and curr.cid != current.cid:
+					actions += [(_('Remove "%s" from favourites') % current.name, self.addRemoveFavourites),]
+				if current.has_archive:
+					actions += [(_('Open archive for "%s"') % current.name, self.showEpgList)]
 				if curr and curr.mode == self.mode:
 					if not self.edit_mode:
 						actions += [(_("Enter edit mode"), self.confirmStartEditing)]
