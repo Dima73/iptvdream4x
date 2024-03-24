@@ -270,6 +270,7 @@ class IPtvDreamStreamPlayer(
 		ref.setData(1, 1)
 		self.session.nav.playService(ref)
 		self.play_service = True
+		self.channels.current_cid = cid
 		self.updateLabels()
 
 	def updateLabels(self):
@@ -479,6 +480,7 @@ class IPtvDreamStreamPlayer(
 			self.play(cid)
 
 	def showList(self):
+		self.channels.current_cid = self.cid
 		self.session.execDialog(self.channels)
 		self.channels.callback = self.listClosed
 
@@ -568,12 +570,14 @@ class IPtvDreamStreamPlayer(
 	def historyNext(self):
 		if self.channels.historyNext():
 			cid = self.channels.getCurrent()
-			self.switchChannel(cid)
+			if cid:
+				self.switchChannel(cid)
 
 	def historyBack(self):
 		if self.channels.historyPrev():
 			cid = self.channels.getCurrent()
-			self.switchChannel(cid)
+			if cid:
+				self.switchChannel(cid)
 
 	def keyNumberGlobal(self, number):
 		if number == 0:
@@ -833,6 +837,7 @@ class History(object):
 					break
 			if add:
 				self._history.append(add)
+				#self._index = len(self._history) - 1
 
 	def clear(self):
 		if self.counts() > 1:
@@ -851,8 +856,8 @@ class History(object):
 		return False
 
 	def append(self, val):
-		while len(self._history) > self._index + 1:
-			self._history.pop()
+		#while len(self._history) > self._index + 1:
+		#	self._history.pop()
 		oldlst = self._history[:]
 		for s in oldlst:
 			if val.cid and val.cid == s.cid:
@@ -863,8 +868,7 @@ class History(object):
 		self._history.append(val)
 		if len(self._history) > self._size:
 			self._history.pop(0)
-		else:
-			self._index += 1
+		self._index = len(self._history) - 1
 
 	def historyPrev(self):
 		if self._index < 1:
@@ -981,6 +985,7 @@ class IPtvDreamChannels(Screen):
 		self["epgNextDescription"] = Label()
 
 		self.current_event_info = ""
+		self.current_cid = None
 		self.alternativeNumber = config.plugins.IPtvDream.alternative_number_in_servicelist.value
 		self["epgProgress"] = Slider(0, 100)
 		self["progress"] = self._progress = EpgProgress()
@@ -1059,9 +1064,7 @@ class IPtvDreamChannels(Screen):
 				self["key_yellow"].setText(_("History"))
 			else:
 				self.historyList = []
-			curr = self.history.now()
-			if curr:
-				self.saved_state = self.history.now().copy()
+			self.saved_state = self.history.now()
 		else:
 			self.historyList = []
 			self["key_yellow"].setText("")
@@ -1116,11 +1119,13 @@ class IPtvDreamChannels(Screen):
 		else:
 			idx = self.list.getSelectedIndex()
 			cid = entry.cid
+			self.current_cid = cid
 			if self.mode == self.HISTORY:
 				self.history.replace(cid)
 				self.openHistory()
 			else:
 				self.history.append(HistoryEntry(self.mode, self.gid, 0, cid, idx))
+				self.saved_state = self.history.now()
 			if self.history.counts() > 1:
 				self["key_yellow"].setText(_("History"))
 			else:
@@ -1325,6 +1330,12 @@ class IPtvDreamChannels(Screen):
 				self.mode = self.HISTORY
 				self.fillList()
 				self.list.moveToIndex(0)
+				if self.current_cid:
+					idx = self.findChannelIndex(self.current_cid)
+					if idx:
+						self.list.moveToIndex(idx)
+			elif self.mode == self.HISTORY:
+				self.showGroups()
 
 	def addRemoveFavourites(self):
 		channel = self.getSelected()
@@ -1528,6 +1539,7 @@ class IPtvDreamChannels(Screen):
 		self.list.down()
 		if self.list.getCurrent():
 			self.history.append(self.createHistoryEntry())
+			self.saved_state = self.history.now()
 			return self.getCurrent()
 		return None
 
@@ -1535,12 +1547,14 @@ class IPtvDreamChannels(Screen):
 		self.list.up()
 		if self.list.getCurrent():
 			self.history.append(self.createHistoryEntry())
+			self.saved_state = self.history.now()
 			return self.getCurrent()
 		return None
 
 	def historyNext(self):
 		h = self.history.historyNext()
 		if h is not None:
+			self.saved_state = self.history.now()
 			self.recoverState(h, True)
 			return self.getCurrent()
 		else:
@@ -1549,6 +1563,7 @@ class IPtvDreamChannels(Screen):
 	def historyPrev(self):
 		h = self.history.historyPrev()
 		if h is not None:
+			self.saved_state = self.history.now()
 			self.recoverState(h, True)
 			return self.getCurrent()
 		else:
@@ -1571,6 +1586,7 @@ class IPtvDreamChannels(Screen):
 			else:
 				return None
 			self.history.append(self.createHistoryEntry())
+			self.saved_state = self.history.now()
 			return cid
 		else:
 			cid = self.db.findNumber(num)
@@ -1583,6 +1599,7 @@ class IPtvDreamChannels(Screen):
 				idx = self.findChannelIndex(cid)
 			self.list.moveToIndex(idx)
 			self.history.append(self.createHistoryEntry())
+			self.saved_state = self.history.now()
 			return cid
 
 	def openSettings(self,answer=None):
