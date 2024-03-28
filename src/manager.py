@@ -300,7 +300,7 @@ class WebConfigFactory(object):
 
 class Manager(object):
 	def __init__(self):
-		pluginConfig.max_playlists = ConfigInteger(0, (0, 9))
+		pluginConfig.max_playlists = ConfigInteger(0, (0, 10))
 		self.max_playlists = pluginConfig.max_playlists.value
 
 		# FIXME: spaghetti code warning
@@ -352,6 +352,7 @@ class Manager(object):
 					self.config[name].playerid = ConfigSelection(PLAYERS, default='4097')
 					self.config[name].use_hlsgw = ConfigYesNo(default=False)
 					self.config[name].last_played = ConfigText()
+					self.config[name].playlist_name = ConfigText()
 
 				trace("Loading module", f)
 				module = my_import('%s.%s' % (prefix, f))
@@ -376,7 +377,7 @@ class Manager(object):
 			return True
 
 	def getNumberChoices(self):
-		return [(str(n), n) for n in range(4)]
+		return [(str(n) if n else _('off'), n) for n in range(10)]
 
 	def setPlaylistNumber(self, n):
 		pluginConfig.max_playlists.value = n
@@ -444,7 +445,11 @@ class IPtvDreamManager(Screen):
 	def makeEntry(self, entry):
 		prefix = resolveFilename(SCOPE_CURRENT_PLUGIN, 'Extensions/IPtvDream')
 		pixmap = LoadPixmap(os.path.join(prefix, 'logo/%s.png' % entry['name']))
-		return entry, pixmap, entry['name']
+		name = entry['name']
+		alt_name = manager.getConfig(entry['name']).playlist_name.value
+		if alt_name:
+			name = alt_name + " (%s)" % entry['name']
+		return entry, pixmap, name
 
 	def getSelected(self):
 		sel = self.list.getCurrent()
@@ -541,15 +546,13 @@ class IPtvDreamManager(Screen):
 		pluginConfig.keymap_type.save()
 		configfile.save()
 
-		self.session.openWithCallback(
-				self.restart, MessageBox, _("Restart enigma2 to apply keymap changes?"), MessageBox.TYPE_YESNO)
+		self.session.openWithCallback(self.restart, MessageBox, _("Restart enigma2 to apply keymap changes?"), MessageBox.TYPE_YESNO)
 
 	def selectSkin(self):
 		def cb(selected):
 			if selected is not None:
 				skinManager.setSkin(selected[1])
-				self.session.openWithCallback(
-					self.restart, MessageBox, _("Restart enigma2 to apply skin changes?"), MessageBox.TYPE_YESNO)
+				self.session.openWithCallback(self.restart, MessageBox, _("Restart enigma2 to apply skin changes?"), MessageBox.TYPE_YESNO)
 		desktop = getDesktop(0).size().width() >= 1920 and "(FHD)" or "(HD)"
 		self.session.openWithCallback(cb, ChoiceBox, title=_("Select skin") + desktop + _(": current (%s)") % skinManager.current(), list=[(s, s) for s in skinManager.skins])
 
@@ -557,10 +560,8 @@ class IPtvDreamManager(Screen):
 		def cb(selected):
 			if selected is not None:
 				manager.setPlaylistNumber(selected[1])
-				self.session.openWithCallback(
-					self.restart, MessageBox, _("Restart enigma2 to apply changes?"), MessageBox.TYPE_YESNO)
-
-		self.session.openWithCallback(cb, ChoiceBox, title=_("Select playlist number") + _(": current (%s)") % pluginConfig.max_playlists.value, list=manager.getNumberChoices())
+				self.session.openWithCallback(self.restart, MessageBox, _("Restart enigma2 to apply changes?"), MessageBox.TYPE_YESNO)
+		self.session.openWithCallback(cb, ChoiceBox, title=_("Select playlist number") + _(": current (%s)") % pluginConfig.max_playlists.value, list=manager.getNumberChoices(), selection=pluginConfig.max_playlists.value)
 
 	def selectStartMode(self):
 		def cb(selected):

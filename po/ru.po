@@ -12,126 +12,114 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 2.0.4\n"
 
-#: main.py:438 main.py:1497 main.py:1628
-#, python-format
 msgid "%d min"
 msgstr "%d мин"
 
-#: main.py:403 main.py:456 main.py:1122 main.py:1494 main.py:1625
-#, python-format
+msgid "%s playlist not found! Please copy your playlist to %s."
+msgstr "Плейлист %s не найден! Пожалуйста, скопируйте свой плейлист в %s."
+
 msgid "+%d min"
 msgstr "+%d мин"
 
-#: manager.py:489 manager.py:523 manager.py:532
-#, python-format
 msgid ": current (%s)"
 msgstr ": текущее (%s)"
 
-#: main.py:505
 msgid "Actions"
 msgstr "Действие"
 
-#: main.py:914 main.py:1107
 msgid "Add"
 msgstr "Добавить"
 
-#: main.py:1203
-#, python-format
 msgid "Add \"%s\" to favourites"
 msgstr "Добавить \"%s\" в фавориты"
 
-#: manager.py:480
 msgid "Additional playlists number"
 msgstr "Количество дополнительных плейлистов"
 
-#: main.py:912
 msgid "All"
 msgstr "Все"
 
-#: main.py:1098
 msgid "All channels"
 msgstr "Все каналы"
 
-#: main.py:118 main.py:305 main.py:1393 main.py:1594
+msgid "Alternative numbering mode"
+msgstr "Альтернативный режим нумерации каналов"
+
 msgid "Archive"
 msgstr "Архив"
 
 msgid "Archive url type"
 msgstr "Тип архива"
 
-#: main.py:121
 msgid "Audio"
 msgstr "Аудио"
 
-#: manager.py:129
 msgid "Authorization error"
 msgstr "Ошибка авторизации"
+
+msgid "Bad paramenter %s"
+msgstr "Неверный параметр %s"
 
 msgid "Bitrate"
 msgstr "Битрейт"
 
-#: main.py:1456
 msgid "Can not load EPG:"
 msgstr "Не удалось загрузить EPG:"
 
-#: settings.py:500
 msgid "Cancel"
 msgstr "Отмена"
 
-#: main.py:236
 msgid "Channel Locked"
 msgstr "Канал заблокирован"
 
-#: main.py:911
 msgid "Channel Selection"
 msgstr "Селектор каналов"
 
-#: common.py:217
 msgid "Channel:"
 msgstr "Канал:"
 
-#: provision.py:114
 msgid "Checking depends"
 msgstr "Проверка зависимостей"
 
-#: updater.py:147
 msgid "Checking updates"
 msgstr "Проверка обновлений"
 
-#: manager.py:478
 msgid "Choose keymap"
 msgstr "Выбрать раскладку кнопок"
 
-#: manager.py:479
 msgid "Choose skin"
 msgstr "Выбрать скин"
 
-#: main.py:1220 main.py:1382
+msgid "Clear history list"
+msgstr "Очистить список истории"
+
 msgid "Clear login data and exit"
 msgstr "Удалить данные авторизации и выйти"
 
-#: settings.py:371 settings.py:510
-#, python-format
 msgid "Configuration of %s"
 msgstr "Настройки %s\""
 
-#: settings.py:372
 msgid "Connecting to server..."
 msgstr "Подключение к серверу..."
 
-#: main.py:1227 manager.py:483
 msgid "Context menu"
 msgstr "Контекстное меню"
 
-#: main.py:1394
+msgid "Count history (1 - off/max - 30)"
+msgstr "Количество истории (1 - выкл/макс. - 30)"
+
+msgid "Default"
+msgstr "Дефолт"
+
+msgid "Delete \"%s\" from history list"
+msgstr "Удалить \"%s\" из списка истории"
+
 msgid "Details"
 msgstr "Детали"
 
-#: main.py:413 main.py:414
 msgid "EPG"
 msgstr "EPG"
 
-#: main.py:1391
 msgid "EPG List"
 msgstr "Список EPG"
 
@@ -141,72 +129,58 @@ msgstr "Ссылка на EPG-json"
 msgid "Enable archive"
 msgstr "Наличие архива"
 
-#: main.py:1215
 msgid "Enter edit mode"
 msgstr "Включить режим редактирования"
 
-#: main.py:235
 msgid "Enter protect password"
 msgstr "Введите защитный код"
 
-#: main.py:247
 msgid "Error while getting stream url:"
 msgstr "Ошибка при получении ссылки на поток:"
 
-#: manager.py:418 settings.py:464
 msgid "Exit"
 msgstr "Выход"
 
-#: main.py:1217
 msgid "Exit edit mode"
 msgstr "Выйти из режима редактирования"
 
-#: main.py:209
 msgid "Exit plugin?"
 msgstr "Выйти из плагина?"
 
-#: main.py:1290
 msgid "Exiting edit mode"
 msgstr "Выход из режима редактирования"
 
-#: main.py:122
 msgid "Extensions"
 msgstr "Дополнения"
 
-#: manager.py:244
 msgid "Failed to authentificate your device"
 msgstr "Ошибка при авторизации вашего устройства"
 
-#: provision.py:139 provision.py:153
-#, python-format
 msgid "Failed to install %s!"
 msgstr "Не удалось установить %s!"
 
-#: main.py:1300
+msgid "Failed to parse %s playlist located at %s."
+msgstr ""
+"Не удалось выполнить синтаксический анализ плейлиста расположенный в %s."
+
 msgid "Failed to save favourites list."
 msgstr "Не удалось сохранить фаворитный список!"
 
-#: settings.py:427 settings.py:558
 msgid "Failed to save settings"
 msgstr "Ошибка при сохранении настроек"
 
-#: provision.py:111
 msgid "Failed to update package list!"
 msgstr "Не удалось обновить список пакетов!"
 
-#: main.py:915 main.py:1101
 msgid "Favourites"
 msgstr "Фавориты"
 
-#: manager.py:305
 msgid "Favourites when not empty"
 msgstr "Фавориты - если список не пустой"
 
-#: provision.py:156
 msgid "Finished!"
 msgstr "Завершено!"
 
-#: settings.py:465
 msgid "Generate new code"
 msgstr "Сгенерировать новый код"
 
@@ -219,7 +193,12 @@ msgstr "Группы"
 msgid "High"
 msgstr "Высокое"
 
-#, python-format
+msgid "History"
+msgstr "История"
+
+msgid "History list"
+msgstr "Список истории"
+
 msgid "IPtvDream %s. Providers list:"
 msgstr "IPtvDream %s. Список провайдеров:"
 
@@ -247,95 +226,81 @@ msgstr ""
 msgid "Input pin"
 msgstr "Введите код"
 
-#, python-format
 msgid "Installing %s"
 msgstr "Установка %s"
 
 msgid "Installing update, please wait"
 msgstr "Установка обновления, пожалуйста ожидайте"
 
-#: settings.py:97
-msgid "Key"
-msgstr "Ключ"
-
 msgid "Invalid key"
 msgstr "Неверный ключ"
 
-#: settings.py:503
+msgid "Key"
+msgstr "Ключ"
+
 msgid "Keyboard"
 msgstr "Клавиатура"
 
-#: main.py:299 main.py:504
 msgid "Live"
 msgstr "Live"
 
-#: settings.py:94
 msgid "Login"
 msgstr "Логин"
 
-#: settings.py:502 settings.py:562
 msgid "Logout"
 msgstr "Скинуть пароль"
-
-#: manager.py:421
-msgid "Menu"
-msgstr "Меню"
 
 msgid "Low"
 msgstr "Низкое"
 
+msgid "Marked channels (A)"
+msgstr "Маркированные каналы (А)"
+
 msgid "Media server"
 msgstr "Медиа сервер"
 
-#: main.py:1581
+msgid "Menu"
+msgstr "Меню"
+
 msgid "No detailed information"
 msgstr "Нет подробной информации"
 
-#: settings.py:501
 msgid "OK"
 msgstr "OK"
 
-#: main.py:1206 main.py:1213
-#, python-format
 msgid "Open archive for \"%s\""
 msgstr "Открыть архив для \"%s\""
 
-#: main.py:1218
 msgid "Open plugin settings"
 msgstr "Открыть настройки плагина"
 
-#: main.py:525 main.py:1376
 msgid "Open provider settings?"
 msgstr "Открыть настройки провайдера?"
 
-#: settings.py:95
 msgid "Password"
 msgstr "Пароль"
 
-#: main.py:416 main.py:417
 msgid "Pause"
 msgstr "Пауза"
 
-#: main.py:991
 msgid "Payment expires: "
 msgstr "Подписка истекает: "
 
-#: main.py:504 main.py:521
 msgid "Play"
 msgstr "Вкл."
 
-#: settings.py:101
 msgid "Player ID"
 msgstr "ID проигрывателя"
 
 msgid "Playlist"
 msgstr "Плейлист"
 
+msgid "Playlist name (only EN language)"
+msgstr "Название плейлиста (только EN язык)"
+
 msgid "Playlist url"
 msgstr "Ссылка на плейлист"
 
-#: manager.py:232
-#, python-format
 msgid "Please go to %s and generate pin code"
 msgstr "Откройте %s и сгенерируйте пин-код"
 
@@ -345,44 +310,36 @@ msgstr "Качество"
 msgid "Remove"
 msgstr "Удалить"
 
-#: main.py:1210
-#, python-format
 msgid "Remove \"%s\" from favourites"
 msgstr "Удалить \"%s\" из фаворитов"
 
-#: manager.py:530
 msgid "Restart enigma2 to apply changes?"
 msgstr "Перезапустить enigma2 для применения изменений?"
 
-#: manager.py:514
 msgid "Restart enigma2 to apply keymap changes?"
 msgstr "Перезапустить enigma2 для применения изменений раскладки?"
 
-#: manager.py:521
 msgid "Restart enigma2 to apply skin changes?"
 msgstr "Перезапустить enigma2 для применения изменений скина?"
 
-#: plugin.py:50
 msgid "Restarting enigma2 after IPtvDream update..."
 msgstr "Перезагрузка enigma2 после обновления IPtvDream..."
 
-#: settings.py:393
 msgid "Scan QR code or visit url below"
 msgstr "Отсканируйте QR код или перейдите по ссылке ниже"
 
-#: manager.py:489
+msgid "Search in TMBD"
+msgstr "Поиск в TMBD"
+
 msgid "Select keymap style"
 msgstr "Выберите тип keymap"
 
-#: manager.py:532
 msgid "Select playlist number"
 msgstr "Выберите количество плейлистов"
 
-#: manager.py:523
 msgid "Select skin"
 msgstr "Выберите skin"
 
-#: manager.py:539
 msgid "Select start mode"
 msgstr "Выбрать стартовый режим"
 
@@ -395,41 +352,36 @@ msgstr "Настройки"
 msgid "Setup"
 msgstr "Настройка"
 
-#: provision.py:163
-#, python-format
 msgid "Setup finished with %d errors."
 msgstr "Настройка завершена ошибок - %d."
 
-#: provision.py:160
 msgid "Setup finished without errors."
 msgstr "Настройка завершена без ошибок."
 
-#: plugin.py:118
 msgid "Show all iptv providers"
 msgstr "Показать все IPTV провайдеры"
 
-#: settings.py:100
+msgid "Show event-progress in servicelist"
+msgstr "Показать прогресс-бар в списке сервисов"
+
 msgid "Show in extensions list"
 msgstr "Отображать в списке расширений"
 
-#: settings.py:99
 msgid "Show in main menu"
 msgstr "Отображать в главном меню"
 
-#: main.py:1199
+msgid "Show number service in servicelist"
+msgstr "Показать номер канала в списке сервисов"
+
 msgid "Sort by name"
 msgstr "Отсортировать по имени"
 
-#: main.py:1198
 msgid "Sort by number"
 msgstr "Отсортировать по номеру"
 
-#: manager.py:481
 msgid "Start mode"
 msgstr "Стартовый режим"
 
-#: manager.py:136 manager.py:226 manager.py:247
-#, python-format
 msgid "Start of %s failed"
 msgstr "Не удалось запустить %s"
 
@@ -445,27 +397,21 @@ msgstr "Сдвиг времени"
 msgid "Update failed"
 msgstr "Ошибка при обновлении"
 
-#: provision.py:105
 msgid "Updating package list, please wait ..."
 msgstr "Обновление списка пакета, пожалуйста подождите..."
 
-#: settings.py:102
 msgid "Use HLS proxy"
 msgstr "Использовать HLS прокси"
 
-#: settings.py:463
 msgid "Waiting for changes made in the web interface..."
 msgstr "Ожидаем внесение изменений черех вэб интерфейс..."
 
-#: settings.py:432
 msgid "Waiting for changes to be entered"
 msgstr "Ожидаем внесение изменений"
 
-#: manager.py:223
 msgid "We need to authenticate your device"
 msgstr "Необходима авторизация вашего устройства"
 
-#: manager.py:420
 msgid "Web Setup"
 msgstr "Вэб-настройка"
 
@@ -487,48 +433,5 @@ msgstr "из файла playlist.m3u"
 msgid "from url"
 msgstr "по ссылке"
 
-#: common.py:50
 msgid "timed out"
 msgstr "тайм-аут!"
-
-msgid "%s playlist not found! Please copy your playlist to %s."
-msgstr "Плейлист %s не найден! Пожалуйста, скопируйте свой плейлист в %s."
-
-msgid "Failed to parse %s playlist located at %s."
-msgstr "Не удалось выполнить синтаксический анализ плейлиста расположенный в %s."
-
-msgid "Bad paramenter %s"
-msgstr "Неверный параметр %s"
-
-msgid "Marked channels (A)"
-msgstr "Маркированные каналы (А)"
-
-msgid "Default"
-msgstr "Дефолт"
-
-msgid "Search in TMBD"
-msgstr "Поиск в TMBD"
-
-msgid "Show event-progress in servicelist"
-msgstr "Показать прогресс-бар в списке сервисов"
-
-msgid "Show number service in servicelist"
-msgstr "Показать номер канала в списке сервисов"
-
-msgid "Alternative numbering mode"
-msgstr "Альтернативный режим нумерации каналов"
-
-msgid "Count history (1 - off/max - 30)"
-msgstr "Количество истории (1 - выкл/макс. - 30)"
-
-msgid "History list"
-msgstr "Список истории"
-
-msgid "History"
-msgstr "История"
-
-msgid "Clear history list"
-msgstr "Очистить список истории"
-
-msgid "Delete \"%s\" from history list"
-msgstr "Удалить \"%s\" из списка истории"

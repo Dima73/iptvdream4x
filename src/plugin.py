@@ -79,10 +79,10 @@ def managerRun(session, **kwargs):
 	provision(session, run)
 
 
-def makeMenuEntry(name, menuid):
+def makeMenuEntry(name, playlist_name, menuid):
 	if menuid == "mainmenu":
 		# title, function, id, priority
-		return [(name, boundFunction(pluginRun, name), "iptvdream_%s" % name, -1)]
+		return [(playlist_name or name, boundFunction(pluginRun, name), "iptvdream_%s" % name, -1)]
 	else:
 		return []
 
@@ -101,12 +101,12 @@ def Plugins(path, **kwargs):
 				plugins += [
 					PluginDescriptor(
 						name=p['name'], description="IPtvDream plugin by technic", icon="%s.png" % name,
-						where=PluginDescriptor.WHERE_MENU, fnc=boundFunction(makeMenuEntry, name))
+						where=PluginDescriptor.WHERE_MENU, fnc=boundFunction(makeMenuEntry, name, manager.getConfig(name).playlist_name.value))
 				]
 			if manager.getConfig(name).in_extensions.value:
 				plugins += [
 					PluginDescriptor(
-						name=p['name'], description="IPtvDream plugin by technic", icon="%s.png" % name,
+						name=manager.getConfig(name).playlist_name.value or p['name'], description="IPtvDream plugin by technic", icon="%s.png" % name,
 						where=PluginDescriptor.WHERE_EXTENSIONSMENU, fnc=makeExtensionsFunc(name))
 				]
 	except Exception as e:

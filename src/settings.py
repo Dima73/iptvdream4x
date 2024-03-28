@@ -130,6 +130,9 @@ class SettingsRepository(object):
 				element.value = value
 				element.save()
 			elif key in self._local_settings:
+				if key == "playlist_name":
+					cfg.playlist_name.value = value
+					cfg.playlist_name.save()
 				local_changes[key] = value
 			elif key in self._remote_settings:
 				remote_changes[key] = value

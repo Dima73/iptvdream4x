@@ -37,6 +37,7 @@ class Playlist(JsonSettings, M3UProvider):
 		self.playlist_url = s['playlist_url'].value
 		self._archive_url = s['archive_url'].value
 		self.archive_tag = s['archive'].value
+		self.playlist_name = s['playlist_name'].value
 		self.playlist = self.PLAY_LIST
 		self.name_map = {}
 
@@ -105,14 +106,15 @@ class Playlist(JsonSettings, M3UProvider):
 			'archive_url': ConfSelection(_("Archive url type"), 'default', [
 				('default', _("Default")), ('flusonic', "Flusonic"),
 			]),
-			'epg_url': ConfString(_("EPG-json url"), "http://technic.cf/epg-soveni")
+			'epg_url': ConfString(_("EPG-json url"), "http://technic.cf/epg-soveni"),
+			'playlist_name': ConfString(_("Playlist name (only EN language)"), ""),
 		}
 		return self._safeLoadSettings(settings)
 
 
 def getOTTProviders():
 	yield Playlist
-	for i in range(1, 4):
+	for i in range(1, 10):
 		class Provider(Playlist):
 			NAME = "M3U-Playlist-%d" % i
 			PLAY_LIST = "playlist_%d.m3u" % i
