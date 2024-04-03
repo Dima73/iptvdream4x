@@ -95,6 +95,7 @@ class PluginStarter(Screen):
 		Screen.__init__(self, session)
 		self.cfg = manager.getConfig(name)
 		self.apiClass = manager.getApi(name)
+		self.time_out = _("timed out")
 		self.task = task
 		if use_web:
 			self.web_factory = WebConfigFactory(session)
@@ -137,7 +138,10 @@ class PluginStarter(Screen):
 				cb = lambda ret: self.login()
 			else:
 				cb = lambda ret: self.exit()
-			message = _("Start of %s failed") % self.db.NAME + "\n" + str(e)
+			name_e = str(e)
+			if self.time_out in name_e:
+				name_e = self.time_out
+			message = _("Start of %s failed") % self.db.NAME + "\n" + name_e
 		self.session.openWithCallback(cb, MessageBox, message, MessageBox.TYPE_ERROR)
 
 	def login(self):
@@ -150,7 +154,10 @@ class PluginStarter(Screen):
 			self.db.setChannelsList()
 		except APIException as e:
 			trace(e)
-			self.session.openWithCallback(lambda ret: self.exit(), MessageBox, str(e), MessageBox.TYPE_ERROR)
+			name_e = str(e)
+			if self.time_out in name_e:
+				name_e = self.time_out
+			self.session.openWithCallback(lambda ret: self.exit(), MessageBox, name_e, MessageBox.TYPE_ERROR)
 		else:
 			self.session.openWithCallback(self.finished, IPtvDreamStreamPlayer, self.db)
 
@@ -300,7 +307,7 @@ class WebConfigFactory(object):
 
 class Manager(object):
 	def __init__(self):
-		pluginConfig.max_playlists = ConfigInteger(0, (0, 10))
+		pluginConfig.max_playlists = ConfigInteger(0, (0, 9))
 		self.max_playlists = pluginConfig.max_playlists.value
 
 		# FIXME: spaghetti code warning

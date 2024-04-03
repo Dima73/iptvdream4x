@@ -87,7 +87,8 @@ class M3UProvider(OfflineFavourites):
 			self._parsePlaylist(self.readHttp(self.playlist_url).split(b'\n'))
 		except IOError as e:
 			self.trace("error!", e, type(e))
-			raise APIException(e)
+			if not "technic.cf" in self.site:
+					raise APIException(e)
 
 	def _downloadTvgMap(self):
 		self.tvg_map = {}
@@ -96,7 +97,10 @@ class M3UProvider(OfflineFavourites):
 				self.tvg_map = json_loads(self.readHttp(self.site + "/channels"))['data']
 			except IOError as e:
 				self.trace("error!", e)
-				raise APIException(e)
+				if not "technic.cf" in self.site:
+					raise APIException(e)
+				else:
+					self.tvg_map = {}
 
 	def makeChannel(self, num, name, url, tvg, logo, rec):
 		"""
@@ -148,7 +152,10 @@ class M3UProvider(OfflineFavourites):
 							tvg = None
 							# self.trace("unknown tvg-id", k)
 					else:
-						tvg = int(m.group(1))
+						try:
+							tvg = int(m.group(1))
+						except:
+							tvg = None
 				else:
 					tvg = None
 				m = group_regexp.match(line)
