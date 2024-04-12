@@ -19,6 +19,11 @@ from twisted.internet.defer import Deferred, succeed, CancelledError
 from Components.AVSwitch import AVSwitch
 from Components.config import config, ConfigSelection
 from enigma import eBackgroundFileEraser, ePicLoad
+try:
+	from enigma import gPixmapPtr
+	empty_picon = gPixmapPtr()
+except:
+	empty_picon = None
 
 from ..loc import translate as _
 from ..layer import enigma2Qt
@@ -133,7 +138,7 @@ class Picon(object):
 			self.picload.PictureData.get().append(self._paint)
 
 	def setIcon(self, url):
-		self.pixmap.instance.setPixmap(None)
+		self.pixmap.instance.setPixmap(empty_picon)
 		if self.d:
 			self.d.cancel()
 		if not url:
@@ -154,7 +159,7 @@ class Picon(object):
 		trace(picInfo)
 		ptr = self.picload.getData()
 		if ptr is not None:
-			self.pixmap.instance.setPixmap(ptr.__deref__())
+			self.pixmap.instance.setPixmap(ptr)
 
 	def _onFail(self, err):
 		e = err.trap(DownloadException, CancelledError)

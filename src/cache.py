@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 
 # from api.abstract_api import AbstractStream
 from .utils import trace, APIException, EPG
-from .layer import eTimer
+from .layer import eTimer, enigma2Qt
 
 try:
 	from typing import List, Dict, Callable, Tuple  # pylint: disable=unused-import
@@ -43,8 +43,11 @@ class LiveEpgWorker(object):
 		trace("LiveEpgWorker", *args)
 
 	def update(self):
-		self.testThread = Thread(target=self.run_update)
-		self.testThread.start()
+		if not enigma2Qt:
+			self.testThread = Thread(target=self.run_update)
+			self.testThread.start()
+		else:
+			self.run_update()
 
 	def run_update(self):
 		t = datetime.now()
