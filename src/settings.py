@@ -36,7 +36,7 @@ from Components.Sources.Boolean import Boolean
 from Tools.LoadPixmap import LoadPixmap
 
 # plugin imports
-from .dist import NAME, VERSION
+from .dist import NAME, VERSION, EPGSERVER
 from .utils import trace, ConfInteger, ConfSelection, ConfString, ConfBool, APIException
 from .virtualkb import VirtualKeyBoard
 from .common import ConfigNumberText
@@ -271,7 +271,7 @@ def agentError(err):
 
 
 class WebConfig(object):
-	site = 'http://technic.cf/web/'
+	site = "http://" + EPGSERVER + "/web/"
 
 	def __init__(self, settings):
 		self.settings = settings

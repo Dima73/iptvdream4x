@@ -46,10 +46,11 @@ class Playlist(JsonSettings, M3UProvider):
 			self.name_map = json_loads(self.readHttp(self.site + "/channels_names"))['data']
 		except (IOError, ValueError) as e:
 			self.trace("error!", e)
-			if not "technic.cf" in self.site:
-				raise APIException(e)
-			else:
-				self.name_map = {}
+			self.name_map = {}
+			#if not "technic.cf" in self.site:
+			#	raise APIException(e)
+			#else:
+			#	self.name_map = {}
 
 	def setChannelsList(self):
 		self._downloadTvgMap()

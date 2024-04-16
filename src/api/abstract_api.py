@@ -23,7 +23,7 @@ except ImportError:
 	pass
 
 from ..utils import getHwAddr, Group, Channel, APIException, APILoginFailed, EPG, u2str
-from ..dist import VERSION
+from ..dist import VERSION, EPGSERVER
 
 MODE_STREAM = 0
 MODE_VIDEOS = 1
@@ -59,7 +59,6 @@ class AbstractAPI(object):
 		self.urlopener = urllib_request.build_opener(urllib_request.HTTPCookieProcessor(self.cookiejar))
 		self.urlopener.addheaders = [
 					('User-Agent', 'IPtvDream/%s %s' % (VERSION, self.NAME)),
-					#('User-Agent', 'Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148'),
 					('Connection', 'Keep-Alive'),
 					('Accept', 'application/json, text/javascript, */*'),
 					('Accept-Encoding', 'gzip, deflate')]
@@ -102,7 +101,7 @@ class AbstractAPI(object):
 		pass
 
 	def readHttp(self, request):
-		o = self.urlopener.open(request)
+		o = self.urlopener.open(request.replace("technic.cf", EPGSERVER))
 		enc = o.headers.get('Content-Encoding')
 		if enc and 'gzip' in enc:
 			reply = zlib.decompress(o.read(), 16+zlib.MAX_WBITS)
