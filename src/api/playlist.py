@@ -89,7 +89,10 @@ class Playlist(JsonSettings, M3UProvider):
 		url = self.channels_data[cid]['url']
 		if self._archive_url == 'default':
 			if time:
-				url += '?utc=%s&lutc=%s' % (time.strftime('%s'), syncTime().strftime('%s'))
+				if any(x in url for x in ['.zala.', 'zabava']):
+					url += '&offset=%d' % (int(time.strftime('%s')) - int(syncTime().strftime('%s')))
+				else:
+					url += '?utc=%s&lutc=%s' % (time.strftime('%s'), syncTime().strftime('%s'))
 			return url
 		elif self._archive_url == 'flusonic':
 			if time is None:
