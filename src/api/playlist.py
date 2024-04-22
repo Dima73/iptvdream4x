@@ -90,7 +90,11 @@ class Playlist(JsonSettings, M3UProvider):
 		if self._archive_url == 'default':
 			if time:
 				if any(x in url for x in ['.zala.', 'zabava']):
-					url += '&offset=%d' % (int(time.strftime('%s')) - int(syncTime().strftime('%s')))
+					t = int(time.strftime('%s')) - int(syncTime().strftime('%s'))
+					sv = '?'
+					if 'version=2' in url:
+						sv = '&'
+					url += '%soffset=%d' % (sv, t)
 				else:
 					url += '?utc=%s&lutc=%s' % (time.strftime('%s'), syncTime().strftime('%s'))
 			return url
@@ -99,7 +103,7 @@ class Playlist(JsonSettings, M3UProvider):
 				return url
 			return url.replace('video.m3u8', 'video-timeshift_abs-%s.m3u8' % time.strftime('%s'))
 		else:
-			raise Exception("Unknown archive_url")
+			raise Exception(_("Unknown archive_url"))
 
 	def getLocalSettings(self):
 		settings = {
