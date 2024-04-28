@@ -97,10 +97,9 @@ class M3UProvider(OfflineFavourites):
 			except IOError as e:
 				self.trace("error!", e)
 				self.tvg_map = {}
-				#if not "technic.cf" in self.site:
-				#	raise APIException(e)
-				#else:
-				#	self.tvg_map = {}
+			except Exception as e:
+				self.trace("Failed to parse json: %s" % str(e))
+				self.tvg_map = {}
 
 	def makeChannel(self, num, name, url, tvg, logo, rec):
 		"""
