@@ -101,13 +101,17 @@ class AbstractAPI(object):
 		pass
 
 	def readHttp(self, request):
-		o = self.urlopener.open(request.replace("technic.cf", EPGSERVER))
-		enc = o.headers.get('Content-Encoding')
-		if enc and 'gzip' in enc:
-			reply = zlib.decompress(o.read(), 16+zlib.MAX_WBITS)
-			return reply
-		else:
-			return o.read()
+		try:
+			o = self.urlopener.open(request.replace("technic.cf", EPGSERVER))
+			enc = o.headers.get('Content-Encoding')
+			if enc and 'gzip' in enc:
+				reply = zlib.decompress(o.read(), 16+zlib.MAX_WBITS)
+				return reply
+			else:
+				return o.read()
+		except Exception as e:
+			self.trace("Failed to parse url - error %s" % str(e))
+			return None
 
 	def getData(self, url, params, name='', fromauth=None):
 		if not self.sid and not fromauth:
