@@ -29,6 +29,7 @@ except:
 # enigma2 imports
 from Components.Sources.List import List as ListSource
 from Components.Sources.Boolean import Boolean
+from Components.Sources.Event import Event
 from Components.ActionMap import ActionMap, NumberActionMap
 from Components.config import config, configfile
 from Components.Label import Label
@@ -41,6 +42,7 @@ from Components.Pixmap import Pixmap
 from Components.GUIComponent import GUIComponent
 from Screens.InfoBarGenerics import InfoBarPlugins, InfoBarExtensions, \
 	InfoBarNotifications, InfoBarAudioSelection, InfoBarSubtitleSupport, InfoBarSummary
+from Screens.InfoBar import InfoBar
 from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
 from Screens.MinuteInput import MinuteInput
@@ -58,7 +60,7 @@ from skin import parseFont, parseColor
 # plugin imports
 from .layer import eTimer
 from .common import NumberEnter
-from .utils import trace, tdSec, secTd, syncTime, APIException, APIWrongPin, EPG, timeit
+from .utils import trace, tdSec, secTd, syncTime, APIException, APIWrongPin, EPG, SetEvent, timeit
 from .api.abstract_api import AbstractStream
 from .loc import translate as _
 from .common import ShowHideScreen, AutoAudioSelection, MainMenuScreen
@@ -134,6 +136,10 @@ class IPtvDreamStreamPlayer(
 		# TODO: think more
 		self["archiveDate"] = Label("")
 		self["inArchive"] = Boolean(False)
+		try:
+			self.session.screen["Event_Now"] = Event()
+		except:
+			pass
 
 		self["picon"] = Pixmap()
 		self._picon = Picon(self["picon"])
@@ -146,7 +152,7 @@ class IPtvDreamStreamPlayer(
 		self["actions"] = ActionMap(["IPtvDreamInfobarActions", "ColorActions", "OkCancelActions"], {
 				"cancel": self.confirmExit,
 				"closePlugin": self.exit,
-				"openVideos": self.openVod,
+				"openVideos": self.activatePiP,
 				"red": self.showEpg,
 				"green": self.runKeyGreen,
 				"openServiceList": self.showList,
@@ -201,7 +207,19 @@ class IPtvDreamStreamPlayer(
 		self.archive_pause = None
 		self.shift = 0
 
-	# Init and destroy
+		if InfoBar.instance is not None:
+			try:
+				self.servicelist = InfoBar.instance.servicelist
+			except:
+				self.servicelist = None
+		else:
+			self.servicelist = None
+		slist = self.servicelist
+		if slist:
+			try:
+				self.pipZapAvailable = slist.dopipzap
+			except:
+				self.pipZapAvailable = None
 
 	def start(self):
 		trace("player start")
@@ -225,6 +243,10 @@ class IPtvDreamStreamPlayer(
 
 		self.cid = cid
 		self.session.nav.stopService()
+		try:
+			self.session.screen["Event_Now"].newEvent(None)
+		except:
+			pass
 		self.play_service = False
 		if cid is None:
 			return
@@ -392,28 +414,32 @@ class IPtvDreamStreamPlayer(
 		self.epgProgressTimer.stop()
 		self.currentEpg = None
 		cid = self.cid
-		time = syncTime() + secTd(self.shift)
+		this_time = syncTime() + secTd(self.shift)
 
 		def setEpgCurrent():
-			curr = self.db.channels[cid].epgCurrent(time)
+			curr = self.db.channels[cid].epgCurrent(this_time)
 			if not curr:
 				return False
-
 			self.currentEpg = curr
 			self["currentName"].setText(curr.name)
 			self["currentTime"].setText(curr.begin.strftime("%H:%M"))
 			self["nextTime"].setText(curr.end.strftime("%H:%M"))
 			try:
-				self.epgTimer.start(curr.timeLeftMilliseconds(time) + 1000)
+				self.epgTimer.start(curr.timeLeftMilliseconds(this_time) + 1000)
 			except OverflowError as of:
 				trace("Overflow error - retry 5 sec.", of)
 				self["currentDuration"].setText("")
 				self.epgTimer.start(5000)
 			else:
-				self["currentDuration"].setText(_("+%d min") % int(curr.timeLeft(time) / 60))
-				self["progressBar"].setValue(curr.percent(time, PROGRESS_SIZE))
+				self["currentDuration"].setText(_("+%d min") % int(curr.timeLeft(this_time) / 60))
+				self["progressBar"].setValue(curr.percent(this_time, PROGRESS_SIZE))
 			self["progressBar"].show()
 			self.epgProgressTimer.start(PROGRESS_TIMER)
+			try:
+				event = SetEvent(curr.begin_timestamp, curr.end_timestamp, curr.name, curr.description, self.shift)
+				self.session.screen["Event_Now"].newEvent(event)
+			except:
+				pass
 			if self.shift:
 				self["archiveDate"].setText(curr.begin.strftime("%d.%m"))
 				self["archiveDate"].show()
@@ -429,7 +455,7 @@ class IPtvDreamStreamPlayer(
 
 		if not setEpgCurrent():
 			try:
-				self.db.loadDayEpg(cid, time)
+				self.db.loadDayEpg(cid, this_time)
 			except APIException as e:
 				trace("ERROR load epg failed! cid =", cid, bool(self.shift), e)
 			if not setEpgCurrent():
@@ -441,7 +467,7 @@ class IPtvDreamStreamPlayer(
 				self["progressBar"].hide()
 
 		def setEpgNext():
-			e = self.db.channels[cid].epgNext(time)
+			e = self.db.channels[cid].epgNext(this_time)
 			if not e:
 				return False
 			self['nextName'].setText(e.name)
@@ -450,7 +476,7 @@ class IPtvDreamStreamPlayer(
 
 		if not setEpgNext():
 			try:
-				self.db.loadDayEpg(cid, time)
+				self.db.loadDayEpg(cid, this_time)
 			except APIException:
 				trace("load epg next failed!")
 			if not setEpgNext():
@@ -539,10 +565,6 @@ class IPtvDreamStreamPlayer(
 		elif answer:
 			self.exit('settings')
 
-	def openVod(self):
-		pass
-		#self.exit('vod')
-
 	def createSummary(self):
 		return InfoBarSummary
 
@@ -601,6 +623,150 @@ class IPtvDreamStreamPlayer(
 	def showError(self, msg):
 		self.session.open(MessageBox, _(msg), MessageBox.TYPE_ERROR, 5)
 
+	def openServiceList(self):
+		if self.pipZapAvailable is None:
+			return
+		try:
+			if self.servicelist and self.servicelist.dopipzap:
+				self.session.execDialog(self.servicelist)
+		except:
+			pass
+
+	def activatePiP(self):
+		if self.pipZapAvailable is None:
+			return
+		try:
+			from Components.SystemInfo import SystemInfo
+		except:
+			return
+		if SystemInfo.get("NumVideoDecoders", 1) > 1:
+			if InfoBar.instance is not None:
+				modeslist = []
+				keyslist = []
+				try:
+					if InfoBar.pipShown(InfoBar.instance):
+						slist = self.servicelist
+						if slist:
+							try:
+								if slist.dopipzap:
+									modeslist.append((_("Zap focus to main screen"), "pipzap"))
+								else:
+									modeslist.append((_("Zap focus to Picture in Picture"), "pipzap"))
+								keyslist.append('red')
+								if slist.dopipzap:
+									modeslist.append((_("Open service list"), "openservicelist"))
+									keyslist.append('yellow')
+							except:
+								pass
+						modeslist.append((_("Move Picture in Picture"), "move"))
+						keyslist.append('green')
+						modeslist.append((_("Disable Picture in Picture"), "stop"))
+						keyslist.append('blue')
+					else:
+						modeslist.append((_("Activate Picture in Picture"), "start"))
+						keyslist.append('blue')
+				except:
+					return
+				dlg = self.session.openWithCallback(self.pipAnswerConfirmed, ChoiceBox, title=_("Choose action:"), list=modeslist, keys=keyslist)
+				dlg.setTitle(_("Menu PiP"))
+
+	def pipAnswerConfirmed(self, answer):
+		answer = answer and answer[1]
+		if answer is None:
+			return
+		if answer == "openservicelist":
+			self.openServiceList()
+		elif answer == "pipzap":
+			try:
+				InfoBar.togglePipzap(InfoBar.instance)
+			except:
+				pass
+		elif answer == "move":
+			if InfoBar.instance is not None:
+				try:
+					InfoBar.movePiP(InfoBar.instance)
+				except:
+					pass
+		elif answer == "stop":
+			if InfoBar.instance is not None:
+				try:
+					if InfoBar.pipShown(InfoBar.instance):
+						slist = self.servicelist
+						try:
+							if slist and slist.dopipzap:
+								slist.togglePipzap()
+						except:
+							pass
+					if hasattr(self.session, 'pip'):
+						del self.session.pip
+					self.session.pipshown = False
+				except:
+					pass
+		elif answer == "start":
+			try:
+				prev_playingref = self.session.nav.currentlyPlayingServiceOrGroup
+				if prev_playingref:
+					self.session.nav.currentlyPlayingServiceOrGroup = None
+				InfoBar.showPiP(InfoBar.instance)
+				if prev_playingref:
+					self.session.nav.currentlyPlayingServiceOrGroup = prev_playingref
+			except:
+				return
+			slist = self.servicelist
+			if slist:
+				try:
+					if not slist.dopipzap and hasattr(self.session, 'pip'):
+						InfoBar.togglePipzap(InfoBar.instance)
+				except:
+					pass
+
+	def nextPipService(self):
+		if self.pipZapAvailable is None:
+			return
+		try:
+			slist = self.servicelist
+			if slist and slist.dopipzap:
+				if slist.inBouquet():
+					prev = slist.getCurrentSelection()
+					if prev:
+						prev = prev.toString()
+						while True:
+							if config.usage.quickzap_bouquet_change.value and slist.atEnd():
+								slist.nextBouquet()
+							else:
+								slist.moveDown()
+							cur = slist.getCurrentSelection()
+							if not cur or (not (cur.flags & 64)) or cur.toString() == prev:
+								break
+				else:
+					slist.moveDown()
+				slist.zap(enable_pipzap=True)
+		except:
+			pass
+
+	def prevPipService(self):
+		if self.pipZapAvailable is None:
+			return
+		try:
+			slist = self.servicelist
+			if slist and slist.dopipzap:
+				if slist.inBouquet():
+					prev = slist.getCurrentSelection()
+					if prev:
+						prev = prev.toString()
+						while True:
+							if config.usage.quickzap_bouquet_change.value:
+								if slist.atBegin():
+									slist.prevBouquet()
+							slist.moveUp()
+							cur = slist.getCurrentSelection()
+							if not cur or (not (cur.flags & 64)) or cur.toString() == prev:
+								break
+				else:
+					slist.moveUp()
+				slist.zap(enable_pipzap=True)
+		except:
+			pass
 
 class ChannelList(MenuList):
 	def __init__(self):

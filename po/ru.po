@@ -160,8 +160,7 @@ msgid "Failed to install %s!"
 msgstr "Не удалось установить %s!"
 
 msgid "Failed to parse %s playlist located at %s."
-msgstr ""
-"Не удалось выполнить синтаксический анализ плейлиста расположенный в %s."
+msgstr "Не удалось выполнить синтаксический анализ плейлиста расположенный в %s."
 
 msgid "Failed to save favourites list."
 msgstr "Не удалось сохранить фаворитный список!"
@@ -435,3 +434,27 @@ msgstr "по ссылке"
 
 msgid "timed out"
 msgstr "тайм-аут!"
+
+msgid "Activate Picture in Picture"
+msgstr "Включить PiP (картинку в картинке)"
+
+msgid "Disable Picture in Picture"
+msgstr "Отключить PiP"
+
+msgid "Move Picture in Picture"
+msgstr "Переместить картинку в картинке"
+
+msgid "Choose action:"
+msgstr "Выберите действие:"
+
+msgid "Zap focus to Picture in Picture"
+msgstr "Переключение в экране PiP"
+
+msgid "Zap focus to main screen"
+msgstr "Переключение в главном экране"
+
+msgid "Open service list"
+msgstr "Открыть список сервисов"
+
+msgid "Menu PiP"
+msgstr "Меню PiP"

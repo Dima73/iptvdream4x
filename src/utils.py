@@ -135,7 +135,7 @@ def toDate(t):
 
 
 class EPG(object):
-	__slots__ = ('begin', 'end', 'end_timestamp', 'name', 'description')
+	__slots__ = ('begin', 'end', 'begin_timestamp', 'end_timestamp', 'name', 'description')
 
 	def __init__(self, begin, end, name, description=""):
 		"""
@@ -146,6 +146,7 @@ class EPG(object):
 		"""
 		self.begin = datetime.fromtimestamp(begin)
 		self.end = datetime.fromtimestamp(end)
+		self.begin_timestamp = int(begin)
 		self.end_timestamp = int(end)
 		self.name = name
 		self.description = description
@@ -180,6 +181,72 @@ class EPG(object):
 	def __repr__(self):
 		return "%s-%s|%s" % (self.begin.strftime("%H:%M"), self.end.strftime("%H:%M"), self.name)
 
+
+class SetEvent():
+	def __init__(self, begin, end, title, desc="", shift=0):
+		self.begin = int(begin)
+		self.end = int(end)
+		self.title = title
+		self.desc = desc
+		self.shift = shift
+
+	def getEventName(self):
+		if self.shift:
+			return "(A) " + self.title
+		return self.title
+
+	def getShortDescription(self):
+		return self.desc
+
+	def getExtendedDescription(self):
+		return ""
+
+	def getBeginTime(self):
+		#if self.shift:
+		#	return int(time.time())
+		return self.begin
+
+	def getEndTime(self):
+		#if self.shift:
+		#	return int(time.time()) + self.getDuration()
+		return self.end
+
+	def getDuration(self):
+		duration = self.end - self.begin
+		return duration if duration >= 0 else 0
+
+	def getEventId(self):
+		return self.begin
+
+	def getBeginTimeString(self):
+		return ""
+
+	def getPdcPil(self):
+		return ""
+
+	def getGenreData(self):
+		return None
+
+	def getParentalData(self):
+		return None
+
+	def getRunningStatus(self):
+		return 0
+
+	def getSeriesCrid(self):
+		return ""
+
+	def getEpisodeCrid(self):
+		return ""
+
+	def getComponentData(self):
+		return 0
+
+	def getNumOfLinkageServices(self):
+		return 0
+
+	def getLinkageService(self):
+		return 0
 
 class ConfEntry(object):
 	def __init__(self, title):
