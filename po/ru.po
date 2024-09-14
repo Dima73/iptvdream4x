@@ -456,5 +456,29 @@ msgstr "Переключение в главном экране"
 msgid "Open service list"
 msgstr "Открыть список сервисов"
 
+msgid "Forward in minutes"
+msgstr "Вперед в минутах"
+
+msgid "Back in minutes"
+msgstr "Назад в минутах"
+
+msgid "This image does not support correct operation of the number set!"
+msgstr "Этот имидж не поддерживает корректную работу набора номера!"
+
+msgid "Zap to '%s'"
+msgstr "Старт таймера для '%s'"
+
+msgid "Stop zap timer for service '%s' (%s min)"
+msgstr "Остановка таймера переключения '%s' (%s мин)"
+
+msgid "Start zap timer for service '%s'"
+msgstr "Запуск таймера переключения для '%s'"
+
+msgid "Zap to (min.)"
+msgstr "Переключить через (мин.)"
+
+msgid "Set zap time to '%s'"
+msgstr "Установить таймер переключения на '%s'"
+
 msgid "Menu PiP"
 msgstr "Меню PiP"

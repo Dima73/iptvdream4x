@@ -26,6 +26,11 @@ try:
 except:
 	TMBD = None
 
+try:
+	from Screens import Standby
+except:
+	Standby = None
+
 # enigma2 imports
 from Components.Sources.List import List as ListSource
 from Components.Sources.Boolean import Boolean
@@ -45,7 +50,6 @@ from Screens.InfoBarGenerics import InfoBarPlugins, InfoBarExtensions, \
 from Screens.InfoBar import InfoBar
 from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
-from Screens.MinuteInput import MinuteInput
 from Screens.ChoiceBox import ChoiceBox
 from Screens.InputBox import InputBox
 from Tools.LoadPixmap import LoadPixmap
@@ -53,8 +57,7 @@ from Tools.Directories import resolveFilename, SCOPE_CURRENT_SKIN, SCOPE_SKIN, S
 
 # enigma2 core imports
 from enigma import eListboxPythonMultiContent, RT_HALIGN_LEFT, RT_HALIGN_RIGHT, RT_VALIGN_CENTER, \
-	eLabel, eSize, ePoint, getDesktop
-from enigma import eServiceReference
+	eLabel, eSize, ePoint, getDesktop, eServiceReference
 from skin import parseFont, parseColor
 
 # plugin imports
@@ -115,6 +118,13 @@ class IPtvDreamStreamPlayer(
 		self.onClose.append(lambda: standbyNotifier.onStandbyChanged.remove(self.standbyChanged))
 
 		self.channels = self.session.instantiateDialog(IPtvDreamChannels, self.db, self)
+		self.openListServices = False
+		self.zapTimer = eTimer()
+		self.zapTimer.callback.append(self.zapTimerRun)
+		self.zap_service = None
+		self.zap_service_name = ""
+		self.zap_service_running = None
+
 		self.onFirstExecBegin.append(self.start)
 
 		self.setTitle(self.db.NAME)
@@ -207,6 +217,9 @@ class IPtvDreamStreamPlayer(
 		self.archive_pause = None
 		self.shift = 0
 
+		self.waitMessageTimer = eTimer()
+		self.waitMessageTimer.callback.append(self.showWaitMessage)
+
 		if InfoBar.instance is not None:
 			try:
 				self.servicelist = InfoBar.instance.servicelist
@@ -226,6 +239,8 @@ class IPtvDreamStreamPlayer(
 		self.showList()
 
 	def exit(self, ret=None):
+		self.zapTimer.stop()
+		self.zap_service = self.zap_service_running = None
 		self.channels.saveQuery()
 		self.session.deleteDialog(self.channels)
 		self.close(ret)
@@ -341,15 +356,35 @@ class IPtvDreamStreamPlayer(
 		return None
 
 	def archiveSeekFwd(self):
-		self.session.openWithCallback(self.fwdJumpMinutes, MinuteInput)
+		try:
+			self.session.openWithCallback(self.fwdJumpMinutes, InputBox, title=_("Forward in minutes"), text="5", type=Input.NUMBER)
+		except:
+			try:
+				self.session.open(MessageBox, _("This image does not support correct operation of the number set!"), MessageBox.TYPE_ERROR, timeout=8)
+			except:
+				pass
 
 	def archiveSeekRwd(self):
-		self.session.openWithCallback(self.rwdJumpMinutes, MinuteInput)
+		try:
+			self.session.openWithCallback(self.rwdJumpMinutes, InputBox, title=_("Back in minutes"), text="5", type=Input.NUMBER)
+		except:
+			try:
+				self.session.open(MessageBox, _("This image does not support correct operation of the number set!"), MessageBox.TYPE_ERROR, timeout=8)
+			except:
+				pass
 
 	def fwdJumpMinutes(self, minutes):
+		try:
+			minutes = int(minutes)
+		except:
+			minutes = 0
 		return minutes and self.fwdJump(minutes * 60)
 
 	def rwdJumpMinutes(self, minutes):
+		try:
+			minutes = int(minutes)
+		except:
+			minutes = 0
 		return minutes and self.rwdJump(minutes * 60)
 
 	def fwdJump(self, seconds):
@@ -498,21 +533,71 @@ class IPtvDreamStreamPlayer(
 	# Dialogs
 
 	def showEpg(self):
-		self.session.openWithCallback(self.programSelected, IPtvDreamEpg, self.db, self.cid, self.shift, self.channels.mode)
+		if self.cid:
+			self.session.openWithCallback(self.programSelected, IPtvDreamEpg, self.db, self.cid, self.shift, self.channels.mode)
 
-	def programSelected(self, cid=None, time=None):
-		if cid is not None and time is not None:
-			self.setArchiveShift(tdSec(time-syncTime()))  # shift < 0
+	def programSelected(self, cid=None, archive_time=None, zaptimer=None):
+		if zaptimer is not None and cid is not None:
+			try:
+				minutes = int(zaptimer)
+			except:
+				return
+			minutes = (minutes - int(time())) // 60
+			self.zap_service_running = int(time()) + (minutes * 60)
+			self.zap_service = self.channels.saved_state
+			self.zap_service.name = self.db.channels[cid].name
+			self.zapTimer.startLongTimer(minutes * 60)
+		elif cid is not None and archive_time is not None:
+			self.setArchiveShift(tdSec(archive_time-syncTime()))  # shift < 0
 			self.play(cid)
+
+	def zapTimerRun(self):
+		if self.zap_service and self.cid and self.cid != self.zap_service.cid:
+			self.channels.current_cid = self.zap_service.cid
+			self.channels.history.append(self.zap_service)
+			self.channels.saved_state = self.channels.history.now()
+			self.zap_service_name = ""
+			if not self.openListServices:
+				self.channels.recoverState(self.zap_service, same=True)
+			try:
+				if Standby and Standby.inStandby:
+					Standby.inStandby.Power()
+			except:
+				pass
+			self.switchChannel(self.zap_service.cid)
+			try:
+				if Standby and Standby.inStandby is None:
+					try:
+						self.session.open(MessageBox, _("Zap to '%s'") % self.zap_service.name, MessageBox.TYPE_INFO, timeout=5)
+					except:
+						pass
+				else:
+					self.zap_service_name = self.zap_service.name
+					self.waitMessageTimer.stop()
+					self.waitMessageTimer.start(5000, True)
+			except:
+				pass
+			self.zap_service = self.zap_service_running = None
+
+	def showWaitMessage(self):
+		if Standby and Standby.inStandby is None:
+			try:
+				self.session.open(MessageBox, _("Zap to '%s'") % self.zap_service_name, MessageBox.TYPE_INFO, timeout=10)
+			except:
+				pass
 
 	def showList(self):
 		self.channels.current_cid = self.cid
 		self.session.execDialog(self.channels)
 		self.channels.callback = self.listClosed
+		self.openListServices = True
 
 	def listClosed(self, cid=None, time=None, action=None):
+		self.openListServices = False
 		if action is None:
 			self.channelSelected(cid, time)
+		elif isinstance(action, int):
+			pass
 		else:
 			self.exit(action)
 
@@ -1124,13 +1209,13 @@ class IPtvDreamChannels(Screen):
 
 	GROUPS, ALL, GROUP, FAV, HISTORY = range(5)
 
-	def __init__(self, session, db, player_ref):
+	def __init__(self, session, db, player=None):
 		Screen.__init__(self, session)
 
 		trace("channels init")
 		self.history = History(config.plugins.IPtvDream.numbers_history.value)
 		self.db = db  # type: AbstractStream
-		self.player_ref = player_ref
+		self.player = player
 		from .manager import manager
 		self.cfg = manager.getConfig(self.db.NAME)
 
@@ -1175,6 +1260,10 @@ class IPtvDreamChannels(Screen):
 		self._progressTimer = eTimer()
 		self._progressTimer.callback.append(self.updateProgramsProgress)
 		self._progressTimer.start(1000 * 60 * 5)  # every 5 min
+
+		self.waitTimer = eTimer()
+		self.waitTimer.callback.append(self.zapTimerPrerare)
+		self.dlg_actions = None
 
 		self["actions"] = ActionMap(
 			["OkCancelActions", "IPtvDreamChannelListActions"], {
@@ -1335,8 +1424,6 @@ class IPtvDreamChannels(Screen):
 
 	def fillList(self):
 		title = [self.db.NAME]
-		# Highlight is used for edit mode
-		# self.list.highlight(self.player_ref.cid)
 		order = self.order_config.getValue()
 		self.list.channelsMode = self.mode
 		if self.mode == self.GROUPS:
@@ -1543,8 +1630,16 @@ class IPtvDreamChannels(Screen):
 				self.close(None)
 
 	def showMenu(self):
+		self.dlg_actions = None
 		actions = []
 		current = self.getSelected()
+		if self.player and self.player.zap_service_running != None and self.player.zap_service != None:
+			next = (self.player.zap_service_running - int(time())) // 60
+			if next > 0:
+				next = '+%s' % next
+			actions += [(_("Stop zap timer for service '%s' (%s min)") % (self.player.zap_service.name, next), self.zapTimerStop)]
+		if self.mode != self.GROUPS and self.player and current and (not self.player.zap_service or current.cid != self.player.zap_service.cid):
+			actions += [(_("Start zap timer for service '%s'") % current.name, self.zapTimerPrerare)]
 		if self.mode == self.HISTORY:
 			if current:
 				if TMBD and self.current_event_info:
@@ -1561,8 +1656,8 @@ class IPtvDreamChannels(Screen):
 				actions += [(_("Search in TMBD"), self.runTMBD)]
 			if current and not self.db.isFavCid(current.cid):
 				actions += [(_('Add "%s" to favourites') % current.name, self.addRemoveFavourites),]
-				if current.has_archive:
-					actions += [(_('Open archive for "%s"') % current.name, self.showEpgList)]
+			if current and current.has_archive:
+				actions += [(_('Open archive for "%s"') % current.name, self.showEpgList)]
 			actions += [(_("Sort by number"), self.sortByNumber), (_("Sort by name"), self.sortByName),]
 		elif self.mode == self.FAV:
 			if current:
@@ -1585,9 +1680,66 @@ class IPtvDreamChannels(Screen):
 		def cb(entry=None):
 			if entry is not None:
 				func = entry[1]
-				func()
+				if func:
+					self.dlg_actions = True
+					func()
+					
 		if actions:
 			self.session.openWithCallback(cb, ChoiceBox, _("Context menu"), actions)
+
+	def zapTimerStop(self):
+		if self.player:
+			self.player.zapTimer.stop()
+			self.player.zap_service = self.player.zap_service_running = None
+			self.close(None, None, 0)
+
+	def zapTimerEpgStart(self, min=None):
+		if min:
+			current = self.getSelected()
+			if self.mode != self.GROUPS and current:
+				try:
+					minutes = int(min)
+				except:
+					return
+				self.player.zap_service_running = int(time()) + (minutes * 60)
+				self.player.zap_service = HistoryEntry(self.mode, self.gid, 0, current.cid, self.list.getSelectedIndex())
+				self.player.zap_service.name = current.name
+				self.player.zapTimer.startLongTimer(minutes * 60)
+				self.close(None, None, minutes)
+
+	def zapTimerStart(self, min=None):
+		if min:
+			current = self.getSelected()
+			if self.mode != self.GROUPS and current:
+				try:
+					min = int(min)
+				except:
+					return
+				else:
+					if min == 0:
+						return
+				minutes = min * 60
+				self.player.zap_service_running = int(time()) + minutes
+				self.player.zap_service = HistoryEntry(self.mode, self.gid, 0, current.cid, self.list.getSelectedIndex())
+				self.player.zap_service.name = current.name
+				self.player.zapTimer.startLongTimer(minutes)
+				self.close(None, None, minutes)
+
+	def zapTimerPrerare(self):
+		if self.dlg_actions:
+			self.dlg_actions = None
+			self.waitTimer.start(500, True)
+			return
+		if self.player:
+			self.player.zapTimer.stop()
+			self.player.zap_service = self.player.zap_service_running = None
+			try:
+				self.session.openWithCallback(self.zapTimerStart, InputBox, title=_("Zap to (min.)"), text="5", type=Input.NUMBER)
+			except:
+				try:
+					self.session.open(MessageBox, _("This image does not support correct operation of the number set!"), MessageBox.TYPE_ERROR, timeout=8)
+				except:
+					pass
 
 	def runTMBD(self):
 		if TMBD and self.current_event_info:
@@ -1671,10 +1823,16 @@ class IPtvDreamChannels(Screen):
 		if channel and self.modeChannels():
 			self.session.openWithCallback(self.showEpgCB, IPtvDreamEpg, self.db, channel.cid, 0, self.mode)
 
-	def showEpgCB(self, cid=None, time=None):
-		trace("selected program", cid, time)
-		if time is not None:
-			self.ok(time)
+	def showEpgCB(self, cid=None, archive_time=None, zaptimer=None):
+		if zaptimer is not None and self.player:
+			self.player.zapTimer.stop()
+			self.player.zap_service = self.player.zap_service_running = None
+			minutes = (int(zaptimer) - int(time())) // 60
+			self.zapTimerEpgStart(minutes)
+			return
+		trace("selected program", cid, archive_time)
+		if archive_time is not None:
+			self.ok(archive_time)
 
 	def getSelected(self):
 		entry = self.list.getCurrent()
@@ -1816,6 +1974,7 @@ class IPtvDreamEpg(Screen):
 				"nextDay": self.nextDay,
 				"prevDay": self.prevDay,
 				"green": self.showInfo,
+				"contextMenu": self.showMenu,
 				"showInfo": self.runTMBD,
 				"red": self.archive
 			}, -1)
@@ -1910,6 +2069,31 @@ class IPtvDreamEpg(Screen):
 		entry = entry[0]
 		if self.db.channels[self.cid].has_archive and entry.begin < syncTime():
 			self.close(self.cid, entry.begin)
+
+	def showMenu(self):
+		actions = []
+		entry = self.list.getCurrent()
+		if not entry:
+			return
+		entry = entry[0]
+		if entry.begin > syncTime():
+			actions += [(_("Set zap time to '%s'") % entry.begin.strftime("%d.%m - %H:%M"), self.zapTimerPrerare)]
+
+		def cb(action=None):
+			if action is not None:
+				func = action[1]
+				if func:
+					func()
+		if actions:
+			self.session.openWithCallback(cb, ChoiceBox, _("Context menu"), actions)
+
+	def zapTimerPrerare(self):
+		entry = self.list.getCurrent()
+		if not entry:
+			return
+		entry = entry[0]
+		if entry.begin > syncTime():
+			self.close(self.cid, None, entry.begin_timestamp)
 
 	def runTMBD(self):
 		entry = self.list.getCurrent()

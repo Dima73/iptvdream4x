@@ -61,6 +61,7 @@ flags="r" - onKeyRepeat
 		<key id="KEY_RIGHT" mapto="pageDown" flags="m"/>
 		<key id="KEY_PAGEUP" mapto="pageUp" flags="m"/>
 		<key id="KEY_PAGEDOWN" mapto="pageDown" flags="m"/>
+		<key id="KEY_MENU" mapto="contextMenu" flags="m" />
 		<key id="KEY_INFO" mapto="showInfo" flags="m" />
 		<key id="KEY_EPG" mapto="showInfo" flags="m" />
 		<key id="KEY_RIGHT" mapto="nextDay" flags="m" />
