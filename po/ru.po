@@ -482,3 +482,6 @@ msgstr "Установить таймер переключения на '%s'"
 
 msgid "Menu PiP"
 msgstr "Меню PiP"
+
+msgid "Examples EPG"
+msgstr "Примеры EPG"

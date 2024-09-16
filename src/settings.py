@@ -26,6 +26,7 @@ from twisted.internet.defer import Deferred, CancelledError
 # enigma2 imports
 from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
+from Screens.ChoiceBox import ChoiceBox
 from Components.config import getConfigListEntry, \
 		ConfigSearchText, ConfigInteger, ConfigSelection, ConfigYesNo, ConfigElement
 from Components.ConfigList import ConfigListScreen
@@ -515,6 +516,10 @@ class IPtvDreamConfig(ConfigListScreen, Screen):
 
 	def showHideKeyboardButton(self):
 		c = self["config"].getCurrent()
+		if c and c[0] == _("EPG-json url"):
+			self["key_yellow"].setText(_("Examples EPG"))
+		else:
+			self["key_yellow"].setText(_("Logout"))
 		if c and isinstance(c[1], (ConfigSearchText, ConfigNumberText)):
 			self["actions_kbd"].setEnabled(True)
 			self["Keyboard"].boolean = True
@@ -561,6 +566,32 @@ class IPtvDreamConfig(ConfigListScreen, Screen):
 				MessageBox, _("Failed to save settings") + "\n%s" % str(ex), MessageBox.TYPE_ERROR)
 
 	def logout(self,answer=None):
+		c = self["config"].getCurrent()
+		try:
+			if c and c[0] == _("EPG-json url"):
+				actions = [
+					('http://technic.cf/epg-soveni', 'http://technic.cf/epg-soveni'),
+					('http://technic.cf/epg-korona', 'http://technic.cf/epg-korona'),
+					('http://technic.cf/epg-iptvxone', 'http://technic.cf/iptvxone'),
+					('http://technic.cf/epg-sharovoz', 'http://technic.cf/epg-sharovoz'),
+					('http://technic.cf/epg-shara-tv', 'http://technic.cf/epg-shara-tv'),
+					('http://technic.cf/epg-1ott', 'http://technic.cf/epg-1ott'),
+					('http://technic.cf/epg-fox', 'http://technic.cf/epg-fox'),
+					('http://technic.cf/epg-ipstream', 'http://technic.cf/epg-ipstream'),
+					('http://technic.cf/epg-smart', 'http://technic.cf/epg-smart'),
+					('http://technic.cf/epg-it999', 'http://technic.cf/epg-it999'),
+					('http://technic.cf/epg-73mtv', 'http://technic.cf/epg-73mtv'),
+					('http://technic.cf/epg-tvteam', 'http://technic.cf/epg-tvteam'),
+				]
+				def cb(action=None):
+					if action is not None:
+						c[1].value = action[1]
+						self["config"].invalidate(self["config"].getCurrent())
+			if actions:
+				self.session.openWithCallback(cb, ChoiceBox, _("Examples EPG"), actions)
+			return
+		except:
+			pass
 		if answer is None:
 			self.session.openWithCallback(self.logout, MessageBox, _("Logout")+ "?", default=False)
 		elif answer:
