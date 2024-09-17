@@ -589,7 +589,7 @@ class IPtvDreamConfig(ConfigListScreen, Screen):
 						self["config"].invalidate(self["config"].getCurrent())
 			if actions:
 				self.session.openWithCallback(cb, ChoiceBox, _("Examples EPG"), actions)
-			return
+				return
 		except:
 			pass
 		if answer is None:
