@@ -336,8 +336,8 @@ class IPtvDreamStreamPlayer(
 	def setArchiveShift(self, time_shift):
 		self.shift = time_shift
 		self.play_shift = ""
+		self.archive_pause = None
 		if time_shift:
-			self.archive_pause = None
 			self["live_actions"].setEnabled(False)
 			self["number_actions"].setEnabled(False)
 			self["archive_actions"].setEnabled(True)
