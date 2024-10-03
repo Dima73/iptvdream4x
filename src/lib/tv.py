@@ -92,9 +92,12 @@ class PiconCache(object):
 			consumers.append(Deferred())
 		except KeyError:
 			d = downloadPage(url, PICON_PATH + f)
-			d.addCallback(self._onLoad, f).addErrback(self._onError, f)
-			consumers = [Deferred()]
-			self.defers[f] = (d, consumers)
+			if d:
+				d.addCallback(self._onLoad, f).addErrback(self._onError, f)
+				consumers = [Deferred()]
+				self.defers[f] = (d, consumers)
+			else:
+				return None
 		return consumers[-1]
 
 	def _onLoad(self, result, f, loaded=True):
@@ -144,7 +147,8 @@ class Picon(object):
 		if not url:
 			return
 		self.d = cache.get(url)
-		self.d.addCallback(self._onReady).addErrback(self._onFail).addErrback(fatalError)
+		if self.d:
+			self.d.addCallback(self._onReady).addErrback(self._onFail).addErrback(fatalError)
 
 	def _onReady(self, file_name):
 		sc = AVSwitch().getFramebufferScale()

@@ -44,7 +44,7 @@ class Playlist(JsonSettings, M3UProvider):
 	def start(self):
 		try:
 			self.name_map = json_loads(self.readHttp(self.site + "/channels_names"))['data']
-		except (IOError, ValueError, AttributeError) as e:
+		except (IOError, ValueError, AttributeError, TypeError) as e:
 			self.trace("error!", e)
 			self.name_map = {}
 			#if not "technic.cf" in self.site:
@@ -62,7 +62,7 @@ class Playlist(JsonSettings, M3UProvider):
 			elif self._m3u_from == 'url':
 				try:
 					lines = self.readHttp(self.playlist_url).split(b'\n')
-				except (IOError, ValueError, AttributeError) as e:
+				except (IOError, ValueError, AttributeError, TypeError) as e:
 					self.trace("error!", e, type(e))
 					raise APIException(e)
 				self._parsePlaylist(lines)

@@ -58,7 +58,10 @@ def downloadError(err):
 
 
 def downloadPage(url, path):
-	return _downloadPage(b(url), path).addErrback(downloadError)
+	try:
+		return _downloadPage(b(url), path).addErrback(downloadError)
+	except:
+		return None
 
 
 class ConfigNumberText(ConfigText):

@@ -396,7 +396,10 @@ class IPtvDreamWebConfig(Screen):
 
 		self["header"].setText(_("Scan QR code or visit url below"))
 		self["label"].setText("Go to %s\nCode: %s" % (self.site, data.encode('utf-8')))
-		downloadPage(self.makeQrUrl(self.site + "?c=%s" % data), path).addCallback(setPixmap)
+		try:
+			downloadPage(self.makeQrUrl(self.site + "?c=%s" % data), path).addCallback(setPixmap)
+		except:
+			pass
 
 	def start(self):
 		# FIXME: handle errors
