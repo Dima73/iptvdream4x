@@ -158,8 +158,10 @@ class IPtvDreamStreamPlayer(
 		icon_path = resolveFilename(SCOPE_CURRENT_PLUGIN, 'Extensions/IPtvDream/logo/%s.png' % self.db.NAME)
 		self.onFirstExecBegin.insert(0, lambda: self["provider"].instance.setPixmap(LoadPixmap(icon_path)))
 
-		# TODO: ActionMap add help.
-		self["actions"] = ActionMap(["IPtvDreamInfobarActions", "ColorActions", "OkCancelActions"], {
+		self.ok_open_servicelist = config.plugins.IPtvDream.keymap_type.value == "enigma" and config.plugins.IPtvDream.ok_open_servicelist.value
+
+		if not self.ok_open_servicelist:
+			self["actions"] = ActionMap(["IPtvDreamInfobarActions", "ColorActions", "OkCancelActions"], {
 				"cancel": self.confirmExit,
 				"closePlugin": self.exit,
 				"openVideos": self.activatePiP,
@@ -171,14 +173,14 @@ class IPtvDreamStreamPlayer(
 				"historyNext": self.historyNext,
 				"historyBack": self.historyBack,
 				"showEPGList": self.showEpg,
-			})
+				})
 
-		self["live_actions"] = ActionMap(["IPtvDreamLiveActions"], {
+			self["live_actions"] = ActionMap(["IPtvDreamLiveActions"], {
 				"zapUp": self.previousChannel,
 				"zapDown": self.nextChannel,
-			}, -1)
+				}, -1)
 
-		self["archive_actions"] = ActionMap(["IPtvDreamArchiveActions", "NumberActions"], {
+			self["archive_actions"] = ActionMap(["IPtvDreamArchiveActions", "NumberActions"], {
 				"exitArchive": self.exitArchive,
 				"playpause": self.playPauseArchive,
 				"play": lambda: self.playPauseArchive(True, False),
@@ -191,7 +193,44 @@ class IPtvDreamStreamPlayer(
 				"6": lambda: self.jump(6),
 				"7": lambda: self.jump(7),
 				"9": lambda: self.jump(9),
-			}, -1)
+				}, -1)
+		else:
+			self["actions"] = ActionMap(["IPtvDreamInfobarOkActions", "ColorActions", "OkCancelActions"], {
+				"cancel": self.confirmExit,
+				"closePlugin": self.exit,
+				"openVideos": self.activatePiP,
+				"ok": self.prewShowList,
+				"red": self.showEpg,
+				"green": self.runKeyGreen,
+				"showIhfobar": self.prevToggleShow,
+				"zapUp": self.previousChannel,
+				"zapDown": self.nextChannel,
+				"historyNext": self.historyNext,
+				"historyBack": self.historyBack,
+				"showEPGList": self.showEpg,
+				})
+
+			self["live_actions"] = ActionMap(["IPtvDreamLiveOkActions"], {
+				"zapUp": self.previousChannel,
+				"zapDown": self.nextChannel,
+				}, -1)
+
+			self["archive_actions"] = ActionMap(["IPtvDreamArchiveOkActions", "NumberActions"], {
+				"exitArchive": self.exitArchive,
+				"playpause": self.playPauseArchive,
+				"play": lambda: self.playPauseArchive(True, False),
+				"pause": lambda: self.playPauseArchive(False, True),
+				"seekForward": self.archiveSeekFwd,
+				"seekBackward": self.archiveSeekRwd,
+				"showIhfobar": self.prevToggleShow,
+				"1": lambda: self.jump(1),
+				"3": lambda: self.jump(3),
+				"4": lambda: self.jump(4),
+				"6": lambda: self.jump(6),
+				"7": lambda: self.jump(7),
+				"9": lambda: self.jump(9),
+				}, -1)
+
 
 		self["number_actions"] = NumberActionMap(["NumberActions"], {
 				"1": self.keyNumberGlobal,
@@ -251,7 +290,19 @@ class IPtvDreamStreamPlayer(
 				self.exit()
 		self.session.openWithCallback(cb, MessageBox, _("Exit plugin?"), MessageBox.TYPE_YESNO)
 
-	# Play
+	def prevToggleShow(self):
+		if self.ok_open_servicelist:
+			self.toggleShow()
+
+	def prewShowList(self):
+		try:
+			if self["archive_actions"].enabled and self.shift and self.archive_pause and not self.play_shift:
+				self.playPauseArchive(True, False)
+				return
+		except:
+			pass
+		if self.ok_open_servicelist:
+			self.showList()
 
 	def play(self, cid):
 		trace("play cid =", cid)
@@ -663,25 +714,25 @@ class IPtvDreamStreamPlayer(
 		self.play(cid)
 
 	def nextChannel(self):
-		if self.channels.mode:
+		if not self.shift and self.channels.mode:
 			cid = self.channels.nextChannel()
 			if cid:
 				self.switchChannel(cid)
 
 	def previousChannel(self):
-		if self.channels.mode:
+		if not self.shift and self.channels.mode:
 			cid = self.channels.prevChannel()
 			if cid:
 				self.switchChannel(cid)
 
 	def historyNext(self):
-		if self.channels.historyNext():
+		if not self.shift and self.channels.historyNext():
 			cid = self.channels.getCurrent()
 			if cid:
 				self.switchChannel(cid)
 
 	def historyBack(self):
-		if self.channels.historyPrev():
+		if not self.shift and self.channels.historyPrev():
 			cid = self.channels.getCurrent()
 			if cid:
 				self.switchChannel(cid)

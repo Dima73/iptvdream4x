@@ -52,6 +52,7 @@ pluginConfig.keymap_type = ConfigSelection(KEYMAPS)
 pluginConfig.show_event_progress_in_servicelist = ConfigYesNo(default=True)
 pluginConfig.show_number_in_servicelist = ConfigYesNo(default=False)
 pluginConfig.alternative_number_in_servicelist = ConfigYesNo(default=False)
+pluginConfig.ok_open_servicelist = ConfigYesNo(default=False)
 pluginConfig.numbers_history = ConfigInteger(10, (1, 30))
 
 class SkinManager(object):
@@ -504,7 +505,13 @@ class IPtvDreamManager(Screen):
 		#if pluginConfig.show_number_in_servicelist.value:
 		actions += [(_("Alternative numbering mode") + _(": current (%s)") % (pluginConfig.alternative_number_in_servicelist.value and _("yes") or _("no")), self.alternativeNumberMode,)]
 		actions += [(_("Count history (1 - off/max - 30)") + _(": current (%s)") % pluginConfig.numbers_history.value, self.numbersHistoryMode,)]
+		if pluginConfig.keymap_type.value == "enigma":
+			actions += [(_("Enable OK for servicelist") + _(": current (%s)") % (pluginConfig.ok_open_servicelist.value and _("yes") or _("no")), self.okShowServicelistMode,)]
 		self.session.openWithCallback(cb, ChoiceBox, _("Context menu"), actions)
+
+	def okShowServicelistMode(self):
+		pluginConfig.ok_open_servicelist.value = not pluginConfig.ok_open_servicelist.value
+		pluginConfig.ok_open_servicelist.save()
 
 	def selectProgressMode(self):
 		pluginConfig.show_event_progress_in_servicelist.value = not pluginConfig.show_event_progress_in_servicelist.value

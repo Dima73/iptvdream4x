@@ -485,3 +485,6 @@ msgstr "Меню PiP"
 
 msgid "Examples EPG"
 msgstr "Примеры EPG"
+
+msgid "Enable OK for servicelist"
+msgstr "Включить OK для списка каналов"
