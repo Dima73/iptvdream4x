@@ -75,8 +75,8 @@ flags="r" - onKeyRepeat
 		<key id="KEY_PLAYPAUSE" mapto="playpause" flags="m" />
 		<key id="KEY_PAUSE" mapto="pause" flags="m" />
 		<key id="KEY_PLAY" mapto="play" flags="m" />
-		<key id="KEY_LEFT" mapto="showIhfobar" flags="mr" />
-		<key id="KEY_RIGHT" mapto="showIhfobar" flags="mr" />
+		<key id="KEY_LEFT" mapto="leftShowIhfobar" flags="mr" />
+		<key id="KEY_RIGHT" mapto="rightShowIhfobar" flags="mr" />
 		<key id="KEY_REWIND" mapto="seekBackward" flags="m" />
 		<key id="KEY_FASTFORWARD" mapto="seekForward" flags="m" />
 	</map>

@@ -168,6 +168,7 @@ class IPtvDreamStreamPlayer(
 				"red": self.showEpg,
 				"green": self.runKeyGreen,
 				"openServiceList": self.showList,
+				"showIhfobar": self.prevToggleShow,
 				"zapUp": self.previousChannel,
 				"zapDown": self.nextChannel,
 				"historyNext": self.historyNext,
@@ -222,7 +223,8 @@ class IPtvDreamStreamPlayer(
 				"pause": lambda: self.playPauseArchive(False, True),
 				"seekForward": self.archiveSeekFwd,
 				"seekBackward": self.archiveSeekRwd,
-				"showIhfobar": self.prevToggleShow,
+				"leftShowIhfobar": self.leftShowIhfobar,
+				"rightShowIhfobar": self.rightShowIhfobar,
 				"1": lambda: self.jump(1),
 				"3": lambda: self.jump(3),
 				"4": lambda: self.jump(4),
@@ -290,9 +292,20 @@ class IPtvDreamStreamPlayer(
 				self.exit()
 		self.session.openWithCallback(cb, MessageBox, _("Exit plugin?"), MessageBox.TYPE_YESNO)
 
-	def prevToggleShow(self):
-		if self.ok_open_servicelist:
+	def leftShowIhfobar(self):
+		if self.shift and self.archive_pause:
+			self.archiveSeekRwd()
+		else:
 			self.toggleShow()
+
+	def rightShowIhfobar(self):
+		if self.shift and self.archive_pause:
+			self.archiveSeekFwd()
+		else:
+			self.toggleShow()
+
+	def prevToggleShow(self):
+		self.toggleShow()
 
 	def prewShowList(self):
 		try:
