@@ -56,8 +56,8 @@ flags="r" - onKeyRepeat
 		<key id="KEY_LEFT" mapto="showIhfobar" flags="mr" />
 		<key id="KEY_RIGHT" mapto="showIhfobar" flags="mr" />
 		<key id="KEY_OK" mapto="ok" flags="m" />
-		<key id="KEY_CHANNELUP" mapto="zapUp" flags="m" />
-		<key id="KEY_CHANNELDOWN" mapto="zapDown" flags="m" />
+		<key id="KEY_CHANNELUP" mapto="zapDown" flags="m" />
+		<key id="KEY_CHANNELDOWN" mapto="zapUp" flags="m" />
 		<key id="KEY_INFO" mapto="showEPGList" flags="m" />
 		<key id="KEY_EPG" mapto="showEPGList" flags="m" />
 		<key id="KEY_PREVIOUS" mapto="historyBack" flags="mr" />
