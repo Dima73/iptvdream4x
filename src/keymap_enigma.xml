@@ -44,8 +44,8 @@ flags="r" - onKeyRepeat
 	</map>
 	
 	<map context="IPtvDreamLiveOkActions">
-		<key id="KEY_UP" mapto="zapUp" flags="mr" />
-		<key id="KEY_DOWN" mapto="zapDown" flags="mr" />
+		<key id="KEY_UP" mapto="zapDown" flags="mr" />
+		<key id="KEY_DOWN" mapto="zapUp" flags="mr" />
 	</map>
 	
 	<map context="IPtvDreamInfobarOkActions">
