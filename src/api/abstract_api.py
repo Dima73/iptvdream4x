@@ -111,7 +111,7 @@ class AbstractAPI(object):
 				return o.read()
 		except Exception as e:
 			self.trace("Failed to parse url - error %s" % str(e))
-			return None
+			return b""
 
 	def getData(self, url, params, name='', fromauth=None):
 		if not self.sid and not fromauth:
