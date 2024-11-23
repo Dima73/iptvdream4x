@@ -27,7 +27,7 @@ class OTTProvider(OfflineFavourites):
 
 	def __init__(self, username, password):
 		super(OTTProvider, self).__init__(username, password)
-		self.playlist_url = "https://antifriztv.com/api/enigma/%s" % username
+		self.playlist_url = "https://antifriz.tv/api/enigma/%s" % username
 		self.api_site = "http://media.af-play.com"
 		self.web_names = {}
 		self.urls = {}
