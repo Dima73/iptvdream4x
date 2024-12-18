@@ -189,7 +189,9 @@ class M3UProvider(OfflineFavourites):
 				continue
 			else:
 				url = line.strip()
-				assert url.find("://") > 0, "line: " + url
+				#assert url.find("://") > 0, "line: " + url
+				if url.find("://") < 1:
+					continue
 				try:
 					gid = group_names[group]
 					g = self.groups[gid]
