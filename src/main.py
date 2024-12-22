@@ -55,9 +55,22 @@ from Screens.InputBox import InputBox
 from Tools.LoadPixmap import LoadPixmap
 from Tools.Directories import resolveFilename, SCOPE_CURRENT_SKIN, SCOPE_SKIN, SCOPE_SYSETC, SCOPE_CURRENT_PLUGIN
 
+# ScreenSaver - not support DreamOS
+availabilityScreenSaver = True
+try:
+	from Screens.InfoBarGenerics import InfoBarScreenSaver
+except:
+	try:
+		from Screens.ScreenSaver import InfoBarScreenSaver
+	except:
+		availabilityScreenSaver = False
+		class InfoBarScreenSaver():
+			def __init__(self):
+				pass
+
 # enigma2 core imports
 from enigma import eListboxPythonMultiContent, RT_HALIGN_LEFT, RT_HALIGN_RIGHT, RT_VALIGN_CENTER, \
-	eLabel, eSize, ePoint, getDesktop, eServiceReference
+	eLabel, eSize, ePoint, getDesktop, eServiceReference, eActionMap
 from skin import parseFont, parseColor
 
 # plugin imports
@@ -89,7 +102,7 @@ if getDesktop(0).size().width() >= 1920:
 class IPtvDreamStreamPlayer(
 		ShowHideScreen, AutoAudioSelection, MainMenuScreen,
 		InfoBarBase, InfoBarPlugins, InfoBarExtensions,
-		InfoBarNotifications, InfoBarAudioSelection, InfoBarSubtitleSupport):
+		InfoBarNotifications, InfoBarAudioSelection, InfoBarSubtitleSupport, InfoBarScreenSaver):
 	"""
 	:type channels: IPtvDreamChannels
 	:type db: AbstractStream
@@ -105,6 +118,7 @@ class IPtvDreamStreamPlayer(
 		InfoBarNotifications.__init__(self)
 		InfoBarAudioSelection.__init__(self)
 		InfoBarSubtitleSupport.__init__(self)
+		InfoBarScreenSaver.__init__(self)
 
 		trace("start stream player: ",db.NAME)
 		self.db = db
@@ -261,6 +275,9 @@ class IPtvDreamStreamPlayer(
 		self.waitMessageTimer = eTimer()
 		self.waitMessageTimer.callback.append(self.showWaitMessage)
 
+		self.waitScreenSaverTimer = eTimer()
+		self.waitScreenSaverTimer.callback.append(self.ScreenSaverTimerStart)
+
 		if InfoBar.instance is not None:
 			try:
 				self.servicelist = InfoBar.instance.servicelist
@@ -322,6 +339,9 @@ class IPtvDreamStreamPlayer(
 
 		self.cid = cid
 		self.session.nav.stopService()
+		if availabilityScreenSaver:
+			self.waitScreenSaverTimer.stop()
+			self.waitScreenSaverTimer.start(200, True)
 		try:
 			self.session.screen["Event_Now"].newEvent(None)
 		except:
@@ -486,6 +506,9 @@ class IPtvDreamStreamPlayer(
 			self.archive_pause = None
 			self.play(self.cid)
 			self.unlockShow()
+			#if availabilityScreenSaver:
+			#	self.waitScreenSaverTimer.stop()
+			#	self.waitScreenSaverTimer.start(200, True)
 		elif pause:
 			# do pause
 			self.archive_pause = syncTime()
@@ -500,6 +523,32 @@ class IPtvDreamStreamPlayer(
 			# freeze epg labels
 			self.epgTimer.stop()
 			self.epgProgressTimer.stop()
+			if availabilityScreenSaver:
+				self.waitScreenSaverTimer.stop()
+				self.waitScreenSaverTimer.start(200, True)
+
+	def ScreenSaverTimerStart(self):
+		try:
+			time = int(config.usage.screen_saver.value)
+		except:
+			return
+		flag = self.shift != 0 and self.archive_pause is not None
+		pip_show = hasattr(self.session, "pipshown") and self.session.pipshown
+		if hasattr(self, "screenSaverTimer"):
+			if time and flag and not pip_show:
+				trace("screenSaver timer start - min.=", time)
+				self.screenSaverTimer.startLongTimer(time)
+			else:
+				self.screenSaverTimer.stop()
+
+	def keypressScreenSaver(self, key, flag):
+		if flag:
+			if hasattr(self, "screensaver"):
+				self.screensaver.hide()
+				trace("screenSaver hide - key=", key)
+			self.waitScreenSaverTimer.stop()
+			self.waitScreenSaverTimer.start(200, True)
+			eActionMap.getInstance() and eActionMap.getInstance().unbindAction('', self.keypressScreenSaver)
 
 	def exitArchive(self):
 		self.setArchiveShift(0)
@@ -698,6 +747,9 @@ class IPtvDreamStreamPlayer(
 			self.archive_pause = None
 			self.play(self.cid)
 			self.unlockShow()
+			#if availabilityScreenSaver:
+			#	self.waitScreenSaverTimer.stop()
+			#	self.waitScreenSaverTimer.start(200, True)
 			self.play_shift = "play"
 			self["key_green"].setText("")
 		elif pause:
@@ -846,11 +898,14 @@ class IPtvDreamStreamPlayer(
 								slist.togglePipzap()
 						except:
 							pass
-					if hasattr(self.session, 'pip'):
+					if hasattr(self.session, "pip"):
 						del self.session.pip
 					self.session.pipshown = False
 				except:
 					pass
+				if availabilityScreenSaver:
+					self.waitScreenSaverTimer.stop()
+					self.waitScreenSaverTimer.start(200, True)
 		elif answer == "start":
 			try:
 				prev_playingref = self.session.nav.currentlyPlayingServiceOrGroup
@@ -864,7 +919,7 @@ class IPtvDreamStreamPlayer(
 			slist = self.servicelist
 			if slist:
 				try:
-					if not slist.dopipzap and hasattr(self.session, 'pip'):
+					if not slist.dopipzap and hasattr(self.session, "pip"):
 						InfoBar.togglePipzap(InfoBar.instance)
 				except:
 					pass
