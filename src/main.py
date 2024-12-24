@@ -1717,7 +1717,11 @@ class IPtvDreamChannels(Screen):
 			self.db.rmFav(channel.cid)
 			self.showFavourites()
 		elif self.mode != self.GROUPS:
-			self.db.addFav(channel.cid)
+			actions = [(_("Add last"), "last"), (_("Add first"), "first"),]
+			def cb(entry=None):
+				if entry is not None:
+					self.db.addFav(channel.cid, entry[1] == "first" and True or False)
+			self.session.openWithCallback(cb, ChoiceBox,_('Add "%s" to favourites') % channel.name, actions)
 
 	def delHistoryCurrrent(self):
 		channel = self.getSelected()
@@ -1777,7 +1781,8 @@ class IPtvDreamChannels(Screen):
 				actions += [(_('Add "%s" to favourites') % current.name, self.addRemoveFavourites),]
 			if current and current.has_archive:
 				actions += [(_('Open archive for "%s"') % current.name, self.showEpgList)]
-			actions += [(_("Sort by number"), self.sortByNumber), (_("Sort by name"), self.sortByName),]
+			if current and self.mode != self.GROUPS:
+				actions += [(_("Sort by number"), self.sortByNumber), (_("Sort by name"), self.sortByName),]
 		elif self.mode == self.FAV:
 			if current:
 				curr = self.history.now()
@@ -1792,9 +1797,13 @@ class IPtvDreamChannels(Screen):
 						actions += [(_("Enter edit mode"), self.confirmStartEditing)]
 					else:
 						actions += [(_("Exit edit mode"), self.notifyFinishEditing)]
+		actions += [("-------------------------------", None)]
 		actions += [(_("Open plugin settings"), self.openSettings)]
 		if self.db.AUTH_TYPE:
 			actions += [(_("Clear login data and exit"), self.clearLogin)]
+		actions += [("-------------------------------", None)]
+		if current and self.mode != self.GROUPS and self.player and not self.player.shift and self.player.cid and current.cid == self.player.cid:
+			actions += [(_('Restart current service "%s"') % current.name, self.restartCurrentService)]
 
 		def cb(entry=None):
 			if entry is not None:
@@ -1802,9 +1811,20 @@ class IPtvDreamChannels(Screen):
 				if func:
 					self.dlg_actions = True
 					func()
-					
 		if actions:
 			self.session.openWithCallback(cb, ChoiceBox, _("Context menu"), actions)
+
+	def restartCurrentService(self):
+		try:
+			ref = _Session.nav.getCurrentlyPlayingServiceOrGroup()
+		except:
+			ref = self.session.nav.getCurrentlyPlayingServiceReference()
+		if ref:
+			self.session.open(MessageBox, _("Force restart service!"), MessageBox.TYPE_INFO, timeout=3)
+			try:
+				self.session.nav.playService(ref, checkParentalControl=False, forceRestart=True)
+			except:
+				self.session.nav.playService(ref, forceRestart=True)
 
 	def zapTimerStop(self):
 		if self.player:

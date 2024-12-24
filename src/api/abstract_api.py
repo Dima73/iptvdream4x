@@ -196,9 +196,12 @@ class AbstractStream(AbstractAPI):
 	def isFavCid(self, cid):
 		return self.favourites.count(cid)
 
-	def addFav(self, cid):
+	def addFav(self, cid, first=False):
 		if not self.favourites.count(cid):
-			self.favourites.append(cid)
+			if first:
+				self.favourites.insert(0, cid)
+			else:
+				self.favourites.append(cid)
 			self.uploadFavourites(self.favourites)
 
 	def rmFav(self, cid):

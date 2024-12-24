@@ -97,7 +97,7 @@ msgid "Clear login data and exit"
 msgstr "Удалить данные авторизации и выйти"
 
 msgid "Configuration of %s"
-msgstr "Настройки %s\""
+msgstr "Настройки %s"
 
 msgid "Connecting to server..."
 msgstr "Подключение к серверу..."
@@ -488,3 +488,15 @@ msgstr "Примеры EPG"
 
 msgid "Enable OK for servicelist"
 msgstr "Включить OK для списка каналов"
+
+msgid "Restart current service \"%s\""
+msgstr "Рестарт текущего сервиса \"%s\""
+
+msgid "Add last"
+msgstr "Добавить последним"
+
+msgid "Add first"
+msgstr "Добавить первым"
+
+msgid "Force restart service!"
+msgstr "Принудительный рестарт сервиса!"
