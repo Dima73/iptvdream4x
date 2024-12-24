@@ -73,7 +73,7 @@ class ConfigNumberText(ConfigText):
 	def onSelect(self, session):
 		self.allmarked = (self.value != "")
 
-	def handleKey(self, key):
+	def handleKey(self, key, callback=None):
 		self.timeout()  # Allow to input next key immediately
 		return super(ConfigNumberText, self).handleKey(key)
 
