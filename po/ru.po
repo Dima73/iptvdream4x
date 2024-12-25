@@ -271,7 +271,7 @@ msgid "Open archive for \"%s\""
 msgstr "Открыть архив для \"%s\""
 
 msgid "Open plugin settings"
-msgstr "Открыть настройки плагина"
+msgstr "Открыть настройки провайдера"
 
 msgid "Open provider settings?"
 msgstr "Открыть настройки провайдера?"

@@ -96,6 +96,8 @@ class SettingsRepository(object):
 				appendEntry(_("Password"), 'password')
 			elif self.db.AUTH_TYPE == "Key":
 				appendEntry(_("Key"), 'login')
+			elif self.db.AUTH_TYPE == "OTT ID":
+				appendEntry("OTT ID", 'login')
 
 		appendEntry(_("Show in main menu"), 'in_menu')
 		appendEntry(_("Show in extensions list"), 'in_extensions')
