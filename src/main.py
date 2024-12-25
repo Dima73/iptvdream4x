@@ -339,6 +339,7 @@ class IPtvDreamStreamPlayer(
 
 		self.cid = cid
 		self.session.nav.stopService()
+		self.archive_pause = None
 		if availabilityScreenSaver:
 			self.waitScreenSaverTimer.stop()
 			self.waitScreenSaverTimer.start(200, True)
