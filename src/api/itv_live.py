@@ -19,6 +19,11 @@ from json import loads as json_loads, dumps as json_dumps
 from .abstract_api import OfflineFavourites
 from ..utils import syncTime, APIException, APILoginFailed, EPG, Channel, Group, u2str
 
+try:
+	from ..loc import translate as _
+except ImportError:
+	def _(text):
+		return text
 
 class OTTProvider(OfflineFavourites):
 	NAME = "ITVLive"
@@ -62,7 +67,7 @@ class OTTProvider(OfflineFavourites):
 		try:
 			json = json_loads(reply)
 		except Exception as e:
-			raise APIException("Failed to parse json: %s" % str(e))
+			raise APIException(_("Failed to parse json: %s") % str(e))
 		# self.trace(json)
 		return json
 

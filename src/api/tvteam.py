@@ -20,6 +20,11 @@ from json import loads as json_loads
 from .abstract_api import JsonSettings, OfflineFavourites
 from ..utils import APIException, APILoginFailed, Channel, Group, EPG, u2str
 
+try:
+	from ..loc import translate as _
+except ImportError:
+	def _(text):
+		return text
 
 class OTTProvider(OfflineFavourites, JsonSettings):
 	NAME = "TvTeam"
@@ -62,7 +67,7 @@ class OTTProvider(OfflineFavourites, JsonSettings):
 		try:
 			json = json_loads(reply)
 		except Exception as e:
-			raise APIException("Failed to parse json: %s" % str(e))
+			raise APIException(_("Failed to parse json: %s") % str(e))
 
 		if json['status'] != 1:
 			if reauth:

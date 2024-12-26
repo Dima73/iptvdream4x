@@ -500,3 +500,6 @@ msgstr "Добавить первым"
 
 msgid "Force restart service!"
 msgstr "Принудительный рестарт сервиса!"
+
+msgid "Failed to parse json: %s"
+msgstr "Ошибка анализа json: %s"

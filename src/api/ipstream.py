@@ -19,6 +19,7 @@ from json import loads as json_loads
 from .abstract_api import JsonSettings
 from .m3u import M3UProvider
 from ..utils import APIException, APILoginFailed, Channel, u2str
+
 try:
 	from ..loc import translate as _
 except ImportError:
@@ -50,7 +51,7 @@ class IpStreamOne(JsonSettings, M3UProvider):
 		try:
 			json = json_loads(reply)
 		except Exception as e:
-			raise APIException("Failed to parse json: %s" % str(e))
+			raise APIException(_("Failed to parse json: %s") % str(e))
 		return json
 
 	def getToken(self, code):
