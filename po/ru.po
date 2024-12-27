@@ -123,6 +123,9 @@ msgstr "EPG"
 msgid "EPG List"
 msgstr "Список EPG"
 
+msgid "EPG url"
+msgstr "EPG сервер"
+
 msgid "EPG-json url"
 msgstr "Ссылка на EPG-json"
 

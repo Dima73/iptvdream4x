@@ -35,7 +35,10 @@ class LiveEpgWorker(object):
 		self._timer.callback.append(self.update)
 		self._epg = {}  # type: Dict[int, List[EPG]]
 		if len(self.db.channels):
-			self.run_update()
+			if hasattr(self.db, 'site') and "api.program.spr24.net" in self.db.site:
+				self.update()
+			else:
+				self.run_update()
 		else:
 			self.trace("No channels!")
 
