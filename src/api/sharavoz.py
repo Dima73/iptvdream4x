@@ -128,7 +128,7 @@ class OTTProvider(JsonSettings, M3UProvider):
 		return url.replace('mpegts', 'timeshift_abs-%s.ts' % time.strftime('%s'))
 
 	def getLocalSettings(self):
-		sharavoz_domains = [('spr24.net', 'spr24.net'), ('sh365.org', 'sh365.org'), ('sharavoz.space', 'sharavoz.space'), ('sharavoz.link', 'sharavoz.link'), ('links-tv-channels.org', 'links-tv-channels.org'), ('sh24.one', 'sh24.one')]
+		sharavoz_domains = [('spr24.net', 'spr24.net'), ('sh365.org', 'sh365.org'), ('sharavoz.space', 'sharavoz.space'), ('sharavoz.link', 'sharavoz.link'), ('sh24.one', 'sh24.one')]
 		settings = {
 			"site": ConfSelection(_("EPG url"), "http://technic.cf/epg-sharovoz", [
 				("http://technic.cf/epg-sharovoz", "technic.cf/epg-sharovoz"), ("http://api.program.spr24.net/api", "spr24.net/api"),
