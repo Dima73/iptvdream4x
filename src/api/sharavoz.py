@@ -38,7 +38,8 @@ class OTTProvider(JsonSettings, M3UProvider):
 		super(OTTProvider, self).__init__(username, password)
 		s = self.getLocalSettings()
 		self.site = s['site'].value
-		self.playlist_url = "http://www.spr24.net/iptv/p/%s/Playlist.Kodi.m3u" % username
+		domain = s['domain'].value
+		self.playlist_url = "http://www.%s/iptv/p/%s/Playlist.Kodi.m3u" % (domain, username)
 		self._url_regexp = compile(r"https?://[\w.]+/(\d+)/mpegts")
 
 	def start(self):
@@ -127,8 +128,11 @@ class OTTProvider(JsonSettings, M3UProvider):
 		return url.replace('mpegts', 'timeshift_abs-%s.ts' % time.strftime('%s'))
 
 	def getLocalSettings(self):
+		sharavoz_domains = [('spr24.net', 'spr24.net'), ('sh365.org', 'sh365.org'), ('sharavoz.space', 'sharavoz.space'), ('sharavoz.link', 'sharavoz.link'), ('links-tv-channels.org', 'links-tv-channels.org'), ('sh24.one', 'sh24.one')]
 		settings = {
 			"site": ConfSelection(_("EPG url"), "http://technic.cf/epg-sharovoz", [
 				("http://technic.cf/epg-sharovoz", "technic.cf/epg-sharovoz"), ("http://api.program.spr24.net/api", "spr24.net/api"),
-			]),}
+			]),
+			"domain": ConfSelection(_("Playlist domain name"), "sh365.org", sharavoz_domains)
+			}
 		return self._safeLoadSettings(settings)

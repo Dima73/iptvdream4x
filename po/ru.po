@@ -506,3 +506,6 @@ msgstr "Принудительный рестарт сервиса!"
 
 msgid "Failed to parse json: %s"
 msgstr "Ошибка анализа json: %s"
+
+msgid "Playlist domain name"
+msgstr "Доменное имя плейлиста"
