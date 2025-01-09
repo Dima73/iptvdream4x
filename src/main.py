@@ -1783,7 +1783,8 @@ class IPtvDreamChannels(Screen):
 			if current and current.has_archive:
 				actions += [(_('Open archive for "%s"') % current.name, self.showEpgList)]
 			if current and self.mode != self.GROUPS:
-				actions += [(_("Sort by number"), self.sortByNumber), (_("Sort by name"), self.sortByName),]
+				order = config.plugins.IPtvDream.channel_order.value
+				actions += [(_("Sort by number") + (order == "number" and " *" or ""), self.sortByNumber), (_("Sort by name") + (order == "name" and " *" or ""), self.sortByName),]
 		elif self.mode == self.FAV:
 			if current:
 				curr = self.history.now()
@@ -1816,12 +1817,15 @@ class IPtvDreamChannels(Screen):
 			self.session.openWithCallback(cb, ChoiceBox, _("Context menu"), actions)
 
 	def restartCurrentService(self):
+		def cb(answer=None):
+			self.close(None)
+			return
 		try:
-			ref = _Session.nav.getCurrentlyPlayingServiceOrGroup()
+			ref = self.session.nav.getCurrentlyPlayingServiceOrGroup()
 		except:
 			ref = self.session.nav.getCurrentlyPlayingServiceReference()
 		if ref:
-			self.session.open(MessageBox, _("Force restart service!"), MessageBox.TYPE_INFO, timeout=3)
+			self.session.openWithCallback(cb, MessageBox, _("Force restart service!"), MessageBox.TYPE_INFO, timeout=3)
 			try:
 				self.session.nav.playService(ref, checkParentalControl=False, forceRestart=True)
 			except:
