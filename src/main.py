@@ -884,7 +884,10 @@ class IPtvDreamStreamPlayer(
 						keyslist.append('blue')
 				except:
 					return
-				dlg = self.session.openWithCallback(self.pipAnswerConfirmed, ChoiceBox, title=_("The cursor in the channel selector should be on the DVB service") + "\n" + _("Choose action:"), list=modeslist, keys=keyslist)
+				first_text = ""
+				if len(keyslist) == 1:
+					first_text = _("The cursor in the channel selector should be on the DVB service") + ".\n"
+				dlg = self.session.openWithCallback(self.pipAnswerConfirmed, ChoiceBox, title= first_text + _("Choose action:"), list=modeslist, keys=keyslist)
 				dlg.setTitle(_("Menu PiP"))
 
 	def pipAnswerConfirmed(self, answer):

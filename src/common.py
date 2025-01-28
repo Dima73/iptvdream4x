@@ -155,9 +155,9 @@ class MainMenuScreen(Screen):
 	""" Handles a menu action, to open the (main) menu """
 	def __init__(self, session):
 		super(MainMenuScreen, self).__init__(session)
-		self["IPtvDreamMenuActions"] = ActionMap(["IPtvDreamChannelListActions"],
+		self["MenuActions"] = ActionMap(["IPtvDreamMenuActions"],
 		{
-			"contextMenu": self.mainMenu,
+			"mainMenu": self.mainMenu,
 		})
 		self.session.infobar = None
 

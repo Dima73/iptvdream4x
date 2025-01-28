@@ -128,6 +128,10 @@ flags="r" - onKeyRepeat
 		<key id="KEY_RIGHT" mapto="moveRelease" flags="b" />
 	</map>
 
+	<map context="IPtvDreamMenuActions">
+		<key id="KEY_MENU" mapto="mainMenu" flags="m" />
+	</map>
+
 	<map context="IPtvDreamMoviesActions">
 		<key id="KEY_RED" mapto="red" flags="m" />
 		<key id="KEY_GREEN" mapto="green" flags="m" />
