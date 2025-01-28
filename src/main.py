@@ -118,6 +118,7 @@ class IPtvDreamStreamPlayer(
 		InfoBarNotifications.__init__(self)
 		InfoBarAudioSelection.__init__(self)
 		InfoBarSubtitleSupport.__init__(self)
+		self.seekstate = (0, 0, 0, ">")
 		InfoBarScreenSaver.__init__(self)
 
 		trace("start stream player: ",db.NAME)
@@ -292,6 +293,7 @@ class IPtvDreamStreamPlayer(
 			except:
 				self.pipZapAvailable = None
 
+
 	def start(self):
 		trace("player start")
 		self.showList()
@@ -308,6 +310,39 @@ class IPtvDreamStreamPlayer(
 			if ret:
 				self.exit()
 		self.session.openWithCallback(cb, MessageBox, _("Exit plugin?"), MessageBox.TYPE_YESNO)
+
+	def ScreenSaverTimerStart(self):
+		global availabilityScreenSaver
+		if not availabilityScreenSaver:
+			return
+		try:
+			startTimer = int(config.usage.screen_saver.value)
+		except:
+			try:
+				startTimer = int(config.usage.screenSaverStartTimer.value)
+			except:
+				if availabilityScreenSaver:
+					availabilityScreenSaver = False
+				return
+		if not startTimer:
+			return
+		flag = self.shift != 0 and self.archive_pause is not None
+		pip_show = hasattr(self, "session") and hasattr(self.session, "pipshown") and self.session.pipshown
+		if hasattr(self, "screenSaverTimer"):
+			if flag and not pip_show:
+				trace("screenSaver timer start - min.=", startTimer)
+				self.screenSaverTimer.startLongTimer(startTimer)
+			else:
+				self.screenSaverTimer.stop()
+
+	def keypressScreenSaver(self, key, flag):
+		if flag:
+			if hasattr(self, "screensaver"):
+				self.screensaver.hide()
+				trace("screenSaver hide - key=", key)
+			self.waitScreenSaverTimer.stop()
+			self.waitScreenSaverTimer.start(200, True)
+			eActionMap.getInstance() and eActionMap.getInstance().unbindAction('', self.keypressScreenSaver)
 
 	def leftShowIhfobar(self):
 		if self.shift and self.archive_pause:
@@ -528,29 +563,6 @@ class IPtvDreamStreamPlayer(
 				self.waitScreenSaverTimer.stop()
 				self.waitScreenSaverTimer.start(200, True)
 
-	def ScreenSaverTimerStart(self):
-		try:
-			time = int(config.usage.screen_saver.value)
-		except:
-			return
-		flag = self.shift != 0 and self.archive_pause is not None
-		pip_show = hasattr(self.session, "pipshown") and self.session.pipshown
-		if hasattr(self, "screenSaverTimer"):
-			if time and flag and not pip_show:
-				trace("screenSaver timer start - min.=", time)
-				self.screenSaverTimer.startLongTimer(time)
-			else:
-				self.screenSaverTimer.stop()
-
-	def keypressScreenSaver(self, key, flag):
-		if flag:
-			if hasattr(self, "screensaver"):
-				self.screensaver.hide()
-				trace("screenSaver hide - key=", key)
-			self.waitScreenSaverTimer.stop()
-			self.waitScreenSaverTimer.start(200, True)
-			eActionMap.getInstance() and eActionMap.getInstance().unbindAction('', self.keypressScreenSaver)
-
 	def exitArchive(self):
 		self.setArchiveShift(0)
 		self.play(self.cid)
@@ -708,6 +720,9 @@ class IPtvDreamStreamPlayer(
 
 	def listClosed(self, cid=None, time=None, action=None):
 		self.openListServices = False
+		if availabilityScreenSaver:
+			self.waitScreenSaverTimer.stop()
+			self.waitScreenSaverTimer.start(200, True)
 		if action is None:
 			self.channelSelected(cid, time)
 		elif isinstance(action, int):
@@ -869,7 +884,7 @@ class IPtvDreamStreamPlayer(
 						keyslist.append('blue')
 				except:
 					return
-				dlg = self.session.openWithCallback(self.pipAnswerConfirmed, ChoiceBox, title=_("Choose action:"), list=modeslist, keys=keyslist)
+				dlg = self.session.openWithCallback(self.pipAnswerConfirmed, ChoiceBox, title=_("The cursor in the channel selector should be on the DVB service") + "\n" + _("Choose action:"), list=modeslist, keys=keyslist)
 				dlg.setTitle(_("Menu PiP"))
 
 	def pipAnswerConfirmed(self, answer):
@@ -909,12 +924,15 @@ class IPtvDreamStreamPlayer(
 					self.waitScreenSaverTimer.start(200, True)
 		elif answer == "start":
 			try:
-				prev_playingref = self.session.nav.currentlyPlayingServiceOrGroup
+				prev_playingrefGroup = self.session.nav.currentlyPlayingServiceOrGroup
+				prev_playingref = self.session.nav.currentlyPlayingServiceReference
 				if prev_playingref:
 					self.session.nav.currentlyPlayingServiceOrGroup = None
+					self.session.nav.currentlyPlayingServiceReference = None
 				InfoBar.showPiP(InfoBar.instance)
 				if prev_playingref:
-					self.session.nav.currentlyPlayingServiceOrGroup = prev_playingref
+					self.session.nav.currentlyPlayingServiceOrGroup = prev_playingrefGroup
+					self.session.nav.currentlyPlayingServiceReference = prev_playingref
 			except:
 				return
 			slist = self.servicelist

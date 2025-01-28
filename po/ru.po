@@ -509,3 +509,9 @@ msgstr "Ошибка анализа json: %s"
 
 msgid "Playlist domain name"
 msgstr "Доменное имя плейлиста"
+
+msgid "IPtvDream plugin by technic"
+msgstr "IPtvDream - автор technic"
+
+msgid "The cursor in the channel selector should be on the DVB service"
+msgstr "Курсор в селекторе каналов должен быть на DVB сервисе"

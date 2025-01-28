@@ -13,6 +13,11 @@
 from __future__ import print_function
 
 import os
+import sys
+
+py3 = False
+if sys.version_info[0] >= 3:
+	py3 = True
 
 from Screens.MessageBox import MessageBox
 from Components.Console import Console
@@ -125,6 +130,15 @@ class ProvisionScreen(MessageBox):
 		except ImportError as e:
 			trace(e)
 			install_list.append("python-subprocess")
+
+		try:
+			import six
+		except ImportError as e:
+			trace(e)
+			if not py3:
+				install_list.append("python-six")
+			else:
+				install_list.append("python3-six")
 
 		if not commandExists("exteplayer3"):
 			install_list.append("exteplayer3")

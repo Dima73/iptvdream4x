@@ -10,6 +10,27 @@
 Отчёты об ошибках, пожелания, предложения, пулл-реквесты и прочая помощь приветствуется!
 
 # Release notes
+## 4.122
+openATV
+-fix ScreenSaver
+-fix PiP(перед запуском плагина, последний канал в селекторе каналов должен быть DVB(тип сервиса 1)
+-fix open Menu(кнопка меню) in play
+
+# Release notes
+## 4.121
+add Sharavoz TV
+-use OTT ID from the provider's personal account
+-EPG "http://technic.cf/epg-sharovoz"
+-format playlist - */Playlist.Kodi.m3u
+
+-add restart current service/add fav(first/last)
+
+# Release notes
+## 4.120
+ - add  ScreenSaver
+-not support DreamOS
+
+# Release notes
 ## 4.119
 
 - enigma --> включить ок для списка каналов(общие настройки)

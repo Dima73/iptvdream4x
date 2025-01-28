@@ -100,13 +100,13 @@ def Plugins(path, **kwargs):
 			if manager.getConfig(name).in_menu.value:
 				plugins += [
 					PluginDescriptor(
-						name=p['name'], description="IPtvDream plugin by technic", icon="%s.png" % name,
+						name=p['name'], description=_("IPtvDream plugin by technic"), icon="%s.png" % name,
 						where=PluginDescriptor.WHERE_MENU, fnc=boundFunction(makeMenuEntry, name, manager.getConfig(name).playlist_name.value))
 				]
 			if manager.getConfig(name).in_extensions.value:
 				plugins += [
 					PluginDescriptor(
-						name=manager.getConfig(name).playlist_name.value or p['name'], description="IPtvDream plugin by technic", icon="%s.png" % name,
+						name=manager.getConfig(name).playlist_name.value or p['name'], description=_("IPtvDream plugin by technic"), icon="%s.png" % name,
 						where=PluginDescriptor.WHERE_EXTENSIONSMENU, fnc=makeExtensionsFunc(name))
 				]
 	except Exception as e:
@@ -121,7 +121,7 @@ def Plugins(path, **kwargs):
 	else:
 		plugins += [
 			PluginDescriptor(
-				name=TITLE, description="IPtvDream plugin by technic", icon="logo/%s.png" % NAME,
+				name=TITLE, description=_("IPtvDream plugin by technic"), icon="logo/%s.png" % NAME,
 				where=PluginDescriptor.WHERE_PLUGINMENU, fnc=boundFunction(pluginRun, NAME)),
 		]
 

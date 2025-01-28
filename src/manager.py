@@ -46,7 +46,7 @@ from .loc import translate as _
 from .settings import IPtvDreamConfig, IPtvDreamWebConfig, SettingsRepository, WebConfig
 from .main import IPtvDreamStreamPlayer, IPtvDreamChannels
 
-PLAYERS = [('1', "enigma2 ts (1)"), ('4097', "gstreamer (4097)"), ('5002', "exteplayer3 (5002)")]
+PLAYERS = [('1', "enigma2 ts (1)"), ('4097', "Gstreamer/ServiceHisilicon (4097)"), ('5002', "exteplayer3 (5002)")]
 KEYMAPS = [('enigma', 'enigma'), ('neutrino', 'neutrino')]
 pluginConfig.keymap_type = ConfigSelection(KEYMAPS)
 pluginConfig.show_event_progress_in_servicelist = ConfigYesNo(default=True)
