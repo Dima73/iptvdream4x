@@ -99,6 +99,9 @@ FHD = False
 if getDesktop(0).size().width() >= 1920:
 	FHD = True
 
+def updateSource(self, *args):
+	pass
+
 class IPtvDreamStreamPlayer(
 		ShowHideScreen, AutoAudioSelection, MainMenuScreen,
 		InfoBarBase, InfoBarPlugins, InfoBarExtensions,
@@ -162,7 +165,12 @@ class IPtvDreamStreamPlayer(
 		self["archiveDate"] = Label("")
 		self["inArchive"] = Boolean(False)
 		try:
+			self.ORIG_Event_Now = self.session.screen["Event_Now"]
+		except:
+			self.ORIG_Event_Now = None
+		try:
 			self.session.screen["Event_Now"] = Event()
+			self.session.screen["Event_Now"].updateSource = updateSource
 		except:
 			pass
 
@@ -303,6 +311,11 @@ class IPtvDreamStreamPlayer(
 		self.zap_service = self.zap_service_running = None
 		self.channels.saveQuery()
 		self.session.deleteDialog(self.channels)
+		try:
+			if self.ORIG_Event_Now:
+				self.session.screen["Event_Now"] = self.ORIG_Event_Now
+		except:
+			pass
 		self.close(ret)
 
 	def confirmExit(self):
