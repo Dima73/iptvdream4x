@@ -31,10 +31,10 @@ class OTTProvider(M3UProvider):
 	def start(self):
 		try:
 			self._tvg_info = json_loads(self.readHttp('http://technic.cf/iptvdream4x/it999/tvg.json'))
-		except IOError as e:
-			self.trace("error!", e)
+		except:
+			self.trace("error load 'http://technic.cf/iptvdream4x/it999/tvg.json'!")
 			self._tvg_info = {}
-			#raise APIException(e)
+
 
 	def setChannelsList(self):
 		m3u = self._locatePlaylist()
