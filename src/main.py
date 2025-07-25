@@ -1835,8 +1835,8 @@ class IPtvDreamChannels(Screen):
 						actions += [(_("Exit edit mode"), self.notifyFinishEditing)]
 		actions += [("-------------------------------", None)]
 		actions += [(_("Open plugin settings"), self.openSettings)]
-		if self.db.AUTH_TYPE:
-			actions += [(_("Clear login data and exit"), self.clearLogin)]
+		#if self.db.AUTH_TYPE:
+		#	actions += [(_("Clear login data and exit"), self.clearLogin)]
 		actions += [("-------------------------------", None)]
 		if current and self.mode != self.GROUPS and self.player and not self.player.shift and self.player.cid and current.cid == self.player.cid:
 			actions += [(_('Restart current service "%s"') % current.name, self.restartCurrentService)]
