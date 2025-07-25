@@ -42,9 +42,9 @@ class OTTProvider(JsonSettings, M3UProvider):
 	def start(self):
 		try:
 			self.name_map = json_loads(self.readHttp(self.site + "/channels_names"))['data']
-		except IOError as e:
-			self.trace("error!", e)
-			raise APIException(e)
+		except:
+			self.trace("error! load 'http://technic.cf/epg-1ott/'")
+			self.name_map = {}
 
 		self._downloadTvgMap()
 		try:
