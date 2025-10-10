@@ -13,7 +13,7 @@ from __future__ import print_function
 
 # system imports
 from datetime import datetime, timedelta
-from time import time
+from time import time, localtime, strftime, mktime
 from six.moves import urllib_parse
 try:
 	# noinspection PyUnresolvedReferences
@@ -55,6 +55,22 @@ from Screens.InputBox import InputBox
 from Tools.LoadPixmap import LoadPixmap
 from Tools.Directories import resolveFilename, SCOPE_CURRENT_SKIN, SCOPE_SKIN, SCOPE_SYSETC, SCOPE_CURRENT_PLUGIN
 
+# Record Timers
+checkServerRecording = None
+availabilityRecordTimers = True
+try:
+	from Screens.TimerEntry import TimerEntry
+	from Components.UsageConfig import preferredTimerPath
+	from RecordTimer import RecordTimerEntry, parseEvent
+	from ServiceReference import ServiceReference
+except:
+	availabilityRecordTimers = False
+
+try:
+	from Screens.TimerEdit import TimerEditList
+except:
+	TimerEditList = None
+
 # ScreenSaver - not support DreamOS
 availabilityScreenSaver = True
 try:
@@ -72,6 +88,11 @@ except:
 from enigma import eListboxPythonMultiContent, RT_HALIGN_LEFT, RT_HALIGN_RIGHT, RT_VALIGN_CENTER, \
 	eLabel, eSize, ePoint, getDesktop, eServiceReference, eActionMap
 from skin import parseFont, parseColor
+
+try:
+	from enigma import iRecordableService
+except:
+	pass
 
 # plugin imports
 from .layer import eTimer
@@ -164,6 +185,7 @@ class IPtvDreamStreamPlayer(
 		# TODO: think more
 		self["archiveDate"] = Label("")
 		self["inArchive"] = Boolean(False)
+		self["inServerRecording"] = Boolean(False)
 		try:
 			self.ORIG_Event_Now = self.session.screen["Event_Now"]
 		except:
@@ -190,6 +212,7 @@ class IPtvDreamStreamPlayer(
 				"openVideos": self.activatePiP,
 				"red": self.showEpg,
 				"green": self.runKeyGreen,
+				"instantRecord": self.openInstantRecord,
 				"openServiceList": self.showList,
 				"showIhfobar": self.prevToggleShow,
 				"zapUp": self.previousChannel,
@@ -226,6 +249,7 @@ class IPtvDreamStreamPlayer(
 				"ok": self.prewShowList,
 				"red": self.showEpg,
 				"green": self.runKeyGreen,
+				"instantRecord": self.openInstantRecord,
 				"showIhfobar": self.prevToggleShow,
 				"zapUp": self.previousChannel,
 				"zapDown": self.nextChannel,
@@ -271,7 +295,7 @@ class IPtvDreamStreamPlayer(
 			})
 
 		self.currentEpg = None
-		self.play_service = False
+		self.play_service = None
 		self.play_shift = ""
 		self.epgTimer = eTimer()
 		self.epgProgressTimer = eTimer()
@@ -279,6 +303,8 @@ class IPtvDreamStreamPlayer(
 		self.epgProgressTimer.callback.append(self.epgUpdateProgress)
 
 		self.archive_pause = None
+		self.event = None
+		self.origProgramInfoAndEvent = None
 		self.shift = 0
 
 		self.waitMessageTimer = eTimer()
@@ -286,6 +312,10 @@ class IPtvDreamStreamPlayer(
 
 		self.waitScreenSaverTimer = eTimer()
 		self.waitScreenSaverTimer.callback.append(self.ScreenSaverTimerStart)
+
+		if availabilityRecordTimers:
+			self.waitTimersCheck = eTimer()
+			self.waitTimersCheck.callback.append(self.waitTimersCheckStart)
 
 		if InfoBar.instance is not None:
 			try:
@@ -316,6 +346,16 @@ class IPtvDreamStreamPlayer(
 				self.session.screen["Event_Now"] = self.ORIG_Event_Now
 		except:
 			pass
+		try:
+			if InfoBar.instance and hasattr(InfoBar.instance , "getProgramInfoAndEvent") and self.origProgramInfoAndEvent:
+				InfoBar.instance.getProgramInfoAndEvent = self.origProgramInfoAndEvent
+		except:
+			pass
+		try:
+			if checkServerRecording and self.checkServerRecordings in self.session.nav.record_event:
+				self.session.nav.record_event.remove(self.checkServerRecordings)
+		except:
+			pass
 		self.close(ret)
 
 	def confirmExit(self):
@@ -323,6 +363,42 @@ class IPtvDreamStreamPlayer(
 			if ret:
 				self.exit()
 		self.session.openWithCallback(cb, MessageBox, _("Exit plugin?"), MessageBox.TYPE_YESNO)
+
+	def currentProgramInfoAndEvent(self, info, name=""):
+		selectedInstantServiceRef = InfoBar.instance is not None and hasattr(InfoBar.instance, "SelectedInstantServiceRef") and InfoBar.instance.SelectedInstantServiceRef
+		if not selectedInstantServiceRef and not self.shift and self.play_service and self.session.nav.getCurrentlyPlayingServiceReference() and self.play_service == self.session.nav.getCurrentlyPlayingServiceReference():
+			info["serviceref"] = self.play_service
+			if self.event is not None:
+				info["event"] = self.event
+				info["name"] = self.event.title
+				info["description"] = self.event.desc
+				info["eventid"] = self.event.getEventId()
+				info["end"] = self.event.getEndTime()
+			else:
+				info["event"] = None
+				try:
+					name = ServiceReference(self.play_service).getServiceName().replace('\xc2\x86', '').replace('\xc2\x87', '') + "-" + _("Instant record")
+				except:
+					name = _("Instant record")
+				info["name"] = name
+				info["description"] = ""
+				info["eventid"] = None
+		elif selectedInstantServiceRef and hasattr(self, "origProgramInfoAndEvent") and self.origProgramInfoAndEvent:
+			self.origProgramInfoAndEvent(info, name)
+
+	def openInstantRecord(self):
+		if not self.shift and self.play_service and self.session.nav.getCurrentlyPlayingServiceReference() and self.play_service == self.session.nav.getCurrentlyPlayingServiceReference():
+			if InfoBar.instance is not None:
+				try:
+					try:
+						if hasattr(InfoBar.instance , "getProgramInfoAndEvent") and self.origProgramInfoAndEvent is None:
+							self.origProgramInfoAndEvent = InfoBar.instance.getProgramInfoAndEvent
+							InfoBar.instance.getProgramInfoAndEvent = self.currentProgramInfoAndEvent
+					except:
+						self.origProgramInfoAndEvent = False
+					hasattr(InfoBar.instance , "instantRecord") and InfoBar.instance.instantRecord()
+				except:
+					self.session.open(MessageBox, _("No instant recording support!"), MessageBox.TYPE_ERROR, timeout=5)
 
 	def ScreenSaverTimerStart(self):
 		global availabilityScreenSaver
@@ -387,6 +463,7 @@ class IPtvDreamStreamPlayer(
 
 		self.cid = cid
 		self.session.nav.stopService()
+		self.event = None
 		self.archive_pause = None
 		if availabilityScreenSaver:
 			self.waitScreenSaverTimer.stop()
@@ -395,7 +472,7 @@ class IPtvDreamStreamPlayer(
 			self.session.screen["Event_Now"].newEvent(None)
 		except:
 			pass
-		self.play_service = False
+		self.play_service = None
 		if cid is None:
 			return
 
@@ -425,21 +502,74 @@ class IPtvDreamStreamPlayer(
 			self.showError(_("Error while getting stream url:") + str(e))
 			self.updateLabels()
 			return
-
 		self.playUrl(url)
 
-	# Player
+	def checkServerRecordings(self, service, event):
+		if event in (iRecordableService.evEnd, iRecordableService.evStart, None):
+			self.waitTimersCheck.stop()
+			self.waitTimersCheck.start(5000, True)
+
+	def waitTimersCheckStart(self):
+		if self["inServerRecording"].getBoolean():
+			self["inServerRecording"].setBoolean(False)
+		try:
+			if checkServerRecording:
+				try:
+					timersrecords = self.session.nav.RecordTimer.timer_list[:]
+				except:
+					timersrecords = []
+				try:
+					processed_timers = self.session.nav.RecordTimer.processed_timers[:]
+				except:
+					processed_timers  = []
+				alltimers = timersrecords + processed_timers
+				if alltimers:
+					for timer in alltimers:
+						if timer and timer.service_ref and timer.service_ref.ref and not timer.justplay and not timer.disabled and timer.state in (1, 2):
+							str_timer_ref = timer.service_ref.ref.toString()
+							if '%3a//' in str_timer_ref and checkServerRecording in str_timer_ref:
+								if not self["inServerRecording"].getBoolean():
+									self["inServerRecording"].setBoolean(True)
+								break
+		except:
+			pass
+
+	def initMonitoringRecording(self):
+		global checkServerRecording
+		if availabilityRecordTimers and self.play_service and checkServerRecording is None:
+			try:
+				if self.checkServerRecordings not in self.session.nav.record_event:
+					self.session.nav.record_event.append(self.checkServerRecordings)
+				server = ""
+				str_service = self.play_service.toString()
+				splitref = str_service.split('/')
+				if not self.cfg.use_hlsgw.value:
+					if len(splitref) > 2 and splitref[2]:
+						server = splitref[2]
+				elif len(splitref) > 5 and splitref[5]:
+					server = splitref[5]
+				if server:
+					checkServerRecording = server
+					self.checkServerRecordings(None, None)
+				else:
+					checkServerRecording = False
+			except:
+				checkServerRecording = False
 
 	def playUrl(self, url):
+		global checkServerRecording
 		cid = self.cid
 		if self.cfg.use_hlsgw.value:
 			url = "http://localhost:7001/url=%s" % urllib_parse.quote(url)
 		trace("play", url)
 		ref = eServiceReference(int(self.cfg.playerid.value), 0, url)
 		ref.setName(self.db.channels[cid].name)
-		ref.setData(1, 1)
+		ref.setData(1, cid)
+		#ref.setUnsignedData(1, cid)
+		self.play_service = ref
+		if availabilityRecordTimers and checkServerRecording is None:
+			self.initMonitoringRecording()
 		self.session.nav.playService(ref)
-		self.play_service = True
 		self.channels.current_cid = cid
 		self.updateLabels()
 
@@ -586,7 +716,7 @@ class IPtvDreamStreamPlayer(
 		# first stop timers
 		self.epgTimer.stop()
 		self.epgProgressTimer.stop()
-		self.currentEpg = None
+		self.event = self.currentEpg = None
 		cid = self.cid
 		this_time = syncTime() + secTd(self.shift)
 
@@ -610,8 +740,8 @@ class IPtvDreamStreamPlayer(
 			self["progressBar"].show()
 			self.epgProgressTimer.start(PROGRESS_TIMER)
 			try:
-				event = SetEvent(curr.begin_timestamp, curr.end_timestamp, curr.name, curr.description, self.shift)
-				self.session.screen["Event_Now"].newEvent(event)
+				self.event = SetEvent(curr.begin_timestamp, curr.end_timestamp, curr.name, curr.description, self.shift)
+				self.session.screen["Event_Now"].newEvent(self.event)
 			except:
 				pass
 			if self.shift:
@@ -673,7 +803,7 @@ class IPtvDreamStreamPlayer(
 
 	def showEpg(self):
 		if self.cid:
-			self.session.openWithCallback(self.programSelected, IPtvDreamEpg, self.db, self.cid, self.shift, self.channels.mode)
+			self.session.openWithCallback(self.programSelected, IPtvDreamEpg, self.db, self.cid, self.shift, self.channels.mode, self.cfg)
 
 	def programSelected(self, cid=None, archive_time=None, zaptimer=None):
 		if zaptimer is not None and cid is not None:
@@ -736,6 +866,8 @@ class IPtvDreamStreamPlayer(
 		if availabilityScreenSaver:
 			self.waitScreenSaverTimer.stop()
 			self.waitScreenSaverTimer.start(200, True)
+		if checkServerRecording:
+			self.checkServerRecordings(None, None)
 		if action is None:
 			self.channelSelected(cid, time)
 		elif isinstance(action, int):
@@ -1544,7 +1676,7 @@ class IPtvDreamChannels(Screen):
 	@timeit
 	def updateProgramsProgress(self):
 		if self.mode != self.GROUPS:
-			print("Updating list progressbars")
+			#print("Updating list progressbars")
 			self.list.updateChannelsProgress()
 
 	def updatePrograms(self, data):
@@ -1838,6 +1970,8 @@ class IPtvDreamChannels(Screen):
 		#if self.db.AUTH_TYPE:
 		#	actions += [(_("Clear login data and exit"), self.clearLogin)]
 		actions += [("-------------------------------", None)]
+		if TimerEditList and availabilityRecordTimers:
+			actions += [(_("Open timers list"), self.openTimerList)]
 		if current and self.mode != self.GROUPS and self.player and not self.player.shift and self.player.cid and current.cid == self.player.cid:
 			actions += [(_('Restart current service "%s"') % current.name, self.restartCurrentService)]
 
@@ -1864,6 +1998,9 @@ class IPtvDreamChannels(Screen):
 				self.session.nav.playService(ref, checkParentalControl=False, forceRestart=True)
 			except:
 				self.session.nav.playService(ref, forceRestart=True)
+
+	def openTimerList(self):
+		self.session.open(TimerEditList)
 
 	def zapTimerStop(self):
 		if self.player:
@@ -1999,7 +2136,7 @@ class IPtvDreamChannels(Screen):
 	def showEpgList(self):
 		channel = self.getSelected()
 		if channel and self.modeChannels():
-			self.session.openWithCallback(self.showEpgCB, IPtvDreamEpg, self.db, channel.cid, 0, self.mode)
+			self.session.openWithCallback(self.showEpgCB, IPtvDreamEpg, self.db, channel.cid, 0, self.mode, self.cfg)
 
 	def showEpgCB(self, cid=None, archive_time=None, zaptimer=None):
 		if zaptimer is not None and self.player:
@@ -2118,7 +2255,7 @@ class IPtvDreamChannels(Screen):
 
 
 class IPtvDreamEpg(Screen):
-	def __init__(self, session, db, cid, shift, mode):
+	def __init__(self, session, db, cid, shift, mode, cfg):
 		Screen.__init__(self, session)
 
 		self["caption"] = Label(_("EPG List"))
@@ -2160,6 +2297,7 @@ class IPtvDreamEpg(Screen):
 		self.db = db  # type: AbstractStream
 		self.cid = cid
 		self.shift = shift
+		self.cfg = cfg
 		self.curr = False
 		self.day = 0
 		self.mode = mode
@@ -2254,8 +2392,15 @@ class IPtvDreamEpg(Screen):
 		if not entry:
 			return
 		entry = entry[0]
+		if TMBD:
+			actions += [(_("Search '%s' in TMBD") % entry.name, self.runTMBD)]
 		if entry.begin > syncTime():
 			actions += [(_("Set zap time to '%s'") % entry.begin.strftime("%d.%m - %H:%M"), self.zapTimerPrerare)]
+		if availabilityRecordTimers and (entry.end_timestamp - entry.begin_timestamp) > 60 and not self.db.channels[self.cid].is_protected and (self.db.channels[self.cid].has_archive and entry.begin < syncTime() and entry.end < syncTime() or entry.begin > syncTime()):
+			actions += [(_("Add record timer for '%s'") % entry.name, self.addTimerPrerare)]
+			actions += [(_("Record available for 'Player ID' 1 or 4097(only using Gstreamer)"), None)]
+		if TimerEditList:
+			actions += [(_("Open timers list"), self.openTimerList)]
 
 		def cb(action=None):
 			if action is not None:
@@ -2265,6 +2410,9 @@ class IPtvDreamEpg(Screen):
 		if actions:
 			self.session.openWithCallback(cb, ChoiceBox, _("Context menu"), actions)
 
+	def openTimerList(self):
+		self.session.open(TimerEditList)
+
 	def zapTimerPrerare(self):
 		entry = self.list.getCurrent()
 		if not entry:
@@ -2272,6 +2420,85 @@ class IPtvDreamEpg(Screen):
 		entry = entry[0]
 		if entry.begin > syncTime():
 			self.close(self.cid, None, entry.begin_timestamp)
+
+	def addTimerPrerare(self):
+		entry = self.list.getCurrent()
+		if not entry:
+			return
+		entry = entry[0]
+		if (self.db.channels[self.cid].has_archive and entry.begin < syncTime() and entry.end < syncTime()) or entry.begin > syncTime():
+			currtime = None
+			begin = entry.begin_timestamp
+			end = entry.end_timestamp
+			duration = end - begin
+			if duration > 86400:
+				end = begin + 86400
+			if entry.begin < syncTime():
+				archive = tdSec(entry.begin - syncTime())
+				currtime = syncTime() + secTd(archive)
+				date = int(time())
+				now = [x for x in localtime(date)]
+				start_time_archive = config.plugins.IPtvDream.default_start_time_archive.value
+				date = int(mktime((now[0], now[1], now[2], start_time_archive[0], start_time_archive[1], 0, 0, 0, now[8])))
+				if now[3] > start_time_archive[0] or (now[3] == prime[0] and now[4] > start_time_archive[1]):
+					date = date + 60 * 60 * 24
+				begin = date
+				end = date + duration
+			url = self.db.getStreamUrl(self.cid, None, currtime)
+			if self.cfg.use_hlsgw.value:
+				url = "http://localhost:7001/url=%s" % urllib_parse.quote(url)
+			serviceref = eServiceReference(int(self.cfg.playerid.value), 0, url)
+			serviceref.setName(self.db.channels[self.cid].name)
+			serviceref.setData(1, self.cid)
+			#serviceref.setUnsignedData(1, self.cid)
+			serviceref = ServiceReference(serviceref)
+			event = SetEvent(begin, end, entry.name, entry.description)
+			newEntry = RecordTimerEntry(serviceref, checkOldTimers=True, dirname=preferredTimerPath(), *parseEvent(event))
+			#newEntry.eit = -1
+			newEntry.justplay = newEntry.always_zap = newEntry.external = newEntry.external_prev = newEntry.repeated = newEntry.record_ecm = False
+			self.session.openWithCallback(self.finishedTimerAdd, TimerEntry, newEntry)
+
+	def finishedTimerAdd(self, answer):
+		if answer[0]:
+			newEntry = answer[1]
+			#newEntry.eit = -1
+			newEntry.justplay = newEntry.always_zap = newEntry.external = newEntry.external_prev = newEntry.repeated = newEntry.record_ecm = False
+			old_timers_count = len(self.session.nav.RecordTimer.timer_list)
+			simulTimerList = self.session.nav.RecordTimer.record(newEntry)
+			if simulTimerList is None:
+				new_timers_count = len(self.session.nav.RecordTimer.timer_list)
+				count = 1
+				server = warning_text = add_text = ""
+				str_service = newEntry.service_ref.ref.toString()
+				splitref = str_service.split('/')
+				if not self.cfg.use_hlsgw.value:
+					if len(splitref) > 2 and splitref[2]:
+						server = splitref[2]
+				elif len(splitref) > 5 and splitref[5]:
+					server = splitref[5]
+				if server:
+					try:
+						timersrecords = self.session.nav.RecordTimer.timer_list[:]
+					except:
+						timersrecords = []
+					try:
+						processed_timers = self.session.nav.RecordTimer.processed_timers[:]
+					except:
+						processed_timers  = []
+					alltimers = timersrecords + processed_timers
+					if alltimers:
+						for timer in alltimers:
+							if timer and timer.service_ref and timer.service_ref.ref and not timer.justplay and not timer.disabled and newEntry != timer:
+								str_timer_ref = timer.service_ref.ref.toString()
+								if '%3a//' in str_timer_ref and server in str_timer_ref and (newEntry.begin < timer.begin <= newEntry.end or timer.begin <= newEntry.begin <= timer.end):
+									count += 1
+				if new_timers_count > old_timers_count and (new_timers_count - old_timers_count) == 1:
+					add_text = _("Timer '%s' added!\n\n Start: %s End: %s") % (newEntry.name, strftime("%d.%m - %H:%M", localtime(newEntry.begin)), strftime("%d.%m - %H:%M", localtime(newEntry.end))) + "\n\n"
+				if count > 1:
+					server_text = server and "(%s)" % server or ""
+					warning_text = _("Warning!\nIt is possible that the recording times %s timers from one server%s overlap.") % (count, server_text)
+				if add_text:
+					self.session.open(MessageBox, add_text + warning_text, MessageBox.TYPE_INFO, timeout=6)
 
 	def runTMBD(self):
 		entry = self.list.getCurrent()
@@ -2291,9 +2518,13 @@ class IPtvDreamEpg(Screen):
 		entry = entry[0]
 		self.session.openWithCallback(self.infoClosed, IPtvDreamEpgInfo, self.db.channels[self.cid], entry, self.curr and self.shift or 0, self.mode)
 
-	def infoClosed(self, time=None):
+	def infoClosed(self, time=None, zaptimer=None, record=None):
 		if time is not None:
 			self.close(self.cid, time)
+		elif record is not None:
+			self.addTimerPrerare()
+		elif zaptimer is not None:
+			self.zapTimerPrerare()
 
 	def up(self):
 		idx = self.list.getIndex()
@@ -2373,6 +2604,7 @@ class IPtvDreamEpgInfo(Screen):
 			"cancel": self.close,
 			"red": self.playArchive,
 			"ok": self.close,
+			"contextMenu": self.showMenu,
 			"showEPGList": self.runTMBD,
 			"up": self["epgDescription"].pageUp,
 			"down": self["epgDescription"].pageDown
@@ -2381,6 +2613,36 @@ class IPtvDreamEpgInfo(Screen):
 	def initGui(self):
 		self._main_part.updateLayout()
 		self._progress.setEpg(self.entry, self.shift)
+	
+	def showMenu(self):
+		actions = []
+		entry = self.entry
+		if TMBD:
+			actions += [(_("Search '%s' in TMBD") % entry.name, self.runTMBD)]
+		if entry.begin > syncTime():
+			actions += [(_("Set zap time to '%s'") % entry.begin.strftime("%d.%m - %H:%M"), self.addZapTimer)]
+		if availabilityRecordTimers and (entry.end_timestamp - entry.begin_timestamp) > 60 and not self.channel.is_protected and (self.channel.has_archive and entry.begin < syncTime() and entry.end < syncTime() or entry.begin > syncTime()):
+			actions += [(_("Add record timer for '%s'") % entry.name, self.addRecordTimer)]
+			actions += [(_("Record available for 'Player ID' 1 or 4097(only using Gstreamer)"), None)]
+		if TimerEditList:
+			actions += [(_("Open timers list"), self.openTimerList)]
+
+		def cb(action=None):
+			if action is not None:
+				func = action[1]
+				if func:
+					func()
+		if actions:
+			self.session.openWithCallback(cb, ChoiceBox, _("Context menu"), actions)
+
+	def openTimerList(self):
+		self.session.open(TimerEditList)
+
+	def addZapTimer(self):
+		self.close(None, True, None)
+
+	def addRecordTimer(self):
+		self.close(None, None, True)
 
 	def runTMBD(self):
 		if TMBD:

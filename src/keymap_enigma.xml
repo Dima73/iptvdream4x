@@ -15,6 +15,7 @@ flags="r" - onKeyRepeat
 		<key id="KEY_CHANNELDOWN" mapto="zapUp" flags="m" />
 		<key id="KEY_INFO" mapto="showEPGList" flags="m" />
 		<key id="KEY_EPG" mapto="showEPGList" flags="m" />
+		<key id="KEY_RECORD" mapto="instantRecord" flags="m" />
 		<key id="KEY_PREVIOUS" mapto="historyBack" flags="mr" />
 		<key id="KEY_NEXT" mapto="historyNext" flags="mr" />
 		<key id="KEY_BACK" mapto="historyBack" flags="mr" />
@@ -58,6 +59,7 @@ flags="r" - onKeyRepeat
 		<key id="KEY_CHANNELDOWN" mapto="zapUp" flags="m" />
 		<key id="KEY_INFO" mapto="showEPGList" flags="m" />
 		<key id="KEY_EPG" mapto="showEPGList" flags="m" />
+		<key id="KEY_RECORD" mapto="instantRecord" flags="m" />
 		<key id="KEY_PREVIOUS" mapto="historyBack" flags="mr" />
 		<key id="KEY_NEXT" mapto="historyNext" flags="mr" />
 		<key id="KEY_BACK" mapto="historyBack" flags="mr" />

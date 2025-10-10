@@ -13,6 +13,7 @@ from __future__ import print_function
 
 # system imports
 import os
+from time import mktime
 
 try:
 	from typing import Optional
@@ -25,8 +26,9 @@ from Screens.MessageBox import MessageBox
 from Screens.InputBox import InputBox
 from Screens.ChoiceBox import ChoiceBox
 from Screens.MinuteInput import MinuteInput
+from Components.ConfigList import ConfigListScreen
 from Components.config import config, configfile, ConfigSubsection, ConfigSubDict,\
-	ConfigText, ConfigYesNo, ConfigSelection, ConfigInteger
+	ConfigText, ConfigYesNo, ConfigSelection, ConfigInteger, ConfigClock
 from Components.ActionMap import ActionMap
 from Components.Label import Label
 from Components.Input import Input
@@ -54,6 +56,58 @@ pluginConfig.show_number_in_servicelist = ConfigYesNo(default=False)
 pluginConfig.alternative_number_in_servicelist = ConfigYesNo(default=False)
 pluginConfig.ok_open_servicelist = ConfigYesNo(default=False)
 pluginConfig.numbers_history = ConfigInteger(10, (1, 30))
+pluginConfig.default_start_time_archive = ConfigClock(default=mktime((1970, 1, 1, 2, 0, 0, 0, 0, 0))) # 02:00
+
+
+class TimeInput(ConfigListScreen, Screen):
+	skin = """<screen name="TimeInput" position="center,center" size="400,200" title="Time input">
+		<ePixmap pixmap="buttons/red.png" position="10,0" size="140,40" alphatest="on"/>
+		<ePixmap pixmap="buttons/green.png" position="250,0" size="140,40" alphatest="on"/>
+		<widget source="key_red" render="Label" position="10,0" zPosition="1" size="140,40" font="Regular;19" halign="center" valign="center" transparent="1"/>
+		<widget source="key_green" render="Label" position="250,0" zPosition="1" size="140,40" font="Regular;19" halign="center" valign="center" transparent="1"/>
+		<widget name="config" position="10,40" size="380,150"/>
+	</screen>"""
+	def __init__(self, session, config_time):
+		self.timeinput_time = config_time
+		Screen.__init__(self, session)
+		self.setTitle(_("Time input"))
+		self["key_red"] = Label(_("Cancel"))
+		self["key_green"] = Label(_("OK"))
+		self["actions"] = ActionMap(["OkCancelActions", "ColorActions"],
+		{
+			"ok": self.keySave,
+			"green": self.keySave,
+			"red": self.keyCancel,
+			"cancel": self.keyCancel,
+		}, -2)
+		self.list = []
+		ConfigListScreen.__init__(self, self.list)
+		self.createSetup(self["config"])
+
+	def createSetup(self, configlist):
+		self.list = [(_("Time"), self.timeinput_time),]
+		configlist.list = self.list
+		configlist.l.setList(self.list)
+
+	def keyPageDown(self):
+		sel = self["config"].getCurrent()
+		if sel and sel[1] == self.timeinput_time:
+			self.timeinput_time.decrement()
+			self["config"].invalidateCurrent()
+
+	def keyPageUp(self):
+		sel = self["config"].getCurrent()
+		if sel and sel[1] == self.timeinput_time:
+			self.timeinput_time.increment()
+			self["config"].invalidateCurrent()
+
+	def keySave(self):
+		self.timeinput_time.save()
+		self.close((True, None))
+
+	def keyCancel(self):
+		self.timeinput_time.cancel()
+		self.close((False,))
 
 class SkinManager(object):
 	SKIN_FILE = 'iptvdream.xml'
@@ -106,7 +160,7 @@ class PluginStarter(Screen):
 
 		try:
 			self.last_service = self.session.nav.getCurrentlyPlayingServiceOrGroup()
-		except AttributeError:
+		except:
 			self.last_service = self.session.nav.getCurrentlyPlayingServiceReference()
 		self.onClose.append(self.restoreService)
 		self.session.nav.stopService()
@@ -433,7 +487,8 @@ class IPtvDreamManager(Screen):
 		self.setTitle(_("IPtvDream %s. Providers list:") % VERSION)
 		self["key_red"] = Label(_("Exit"))
 		self["key_green"] = Label(_("Setup"))
-		self["key_yellow"] = Label(_("Web Setup"))
+		#self["key_yellow"] = Label(_("Web Setup"))
+		self["key_yellow"] = Label()
 		self["key_blue"] = Label(_("Menu"))
 		self["actions"] = ActionMap(
 				["OkCancelActions", "ColorActions"], {
@@ -479,7 +534,8 @@ class IPtvDreamManager(Screen):
 	def webSetup(self):
 		entry = self.getSelected()
 		if entry is not None:
-			self.startPlugin(entry['name'], 'settings', True)
+			pass
+			#self.startPlugin(entry['name'], 'settings', True)
 
 	def startPlugin(self, name, task=None, use_web=False):
 		self.session.open(manager.getStarterClass(name), name, task, use_web)
@@ -492,7 +548,8 @@ class IPtvDreamManager(Screen):
 		def cb(entry=None):
 			if entry is not None:
 				func = entry[1]
-				func()
+				if func:
+					func()
 
 		actions = [
 			(_("Choose keymap"), self.selectKeymap),
@@ -507,7 +564,16 @@ class IPtvDreamManager(Screen):
 		actions += [(_("Count history (1 - off/max - 30)") + _(": current (%s)") % pluginConfig.numbers_history.value, self.numbersHistoryMode,)]
 		if pluginConfig.keymap_type.value == "enigma":
 			actions += [(_("Enable OK for servicelist") + _(": current (%s)") % (pluginConfig.ok_open_servicelist.value and _("yes") or _("no")), self.okShowServicelistMode,)]
+		actions += [(_("Default recordings start time for archive"), self.setArchiveTime,)]
 		self.session.openWithCallback(cb, ChoiceBox, _("Context menu"), actions)
+
+	def setArchiveTime(self):
+		dlg = self.session.openWithCallback(self.TimeInputClosed, TimeInput, pluginConfig.default_start_time_archive)
+		#dlg.setTitle(_("Default recording start time for archive"))
+
+	def TimeInputClosed(self, ret):
+		if len(ret) > 1 and ret[0]:
+			pass
 
 	def okShowServicelistMode(self):
 		pluginConfig.ok_open_servicelist.value = not pluginConfig.ok_open_servicelist.value

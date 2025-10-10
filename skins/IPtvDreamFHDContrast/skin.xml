@@ -3,6 +3,9 @@
     <widget alphatest="blend" pixmap="IPtvDreamFHD/icons/archive.png" position="197,32" render="Pixmap" size="43,32" source="inArchive" zPosition="5">
       <convert type="ConditionalShowHide">Blink,2000,1000</convert>
     </widget>
+    <widget alphatest="blend" pixmap="IPtvDream/icons/record.png" position="250,42" render="Pixmap" size="30,30" source="inServerRecording" zPosition="5">
+      <convert type="ConditionalShowHide" />
+    </widget>
     <widget backgroundColor="#00152f44" font="Regular;24" foregroundColor="#00dedede" halign="right" position="1070,34" render="Label" size="70,33" source="session.CurrentService" transparent="1" zPosition="1">
       <convert type="ServiceInfo">Framerate</convert>
     </widget>
@@ -132,7 +135,9 @@
     <widget backgroundColor="#0004030c" font="Regular;29" foregroundColor="#00ffffff" name="epgDuration" position="1488,608" size="220,33" transparent="1" />
     <widget backgroundColor="#0004030c" borderColor="#00bbbbbb" borderWidth="1" foregroundColor="#00005db5" name="epgProgress" position="1710,612" size="191,23" transparent="1" />
     <widget backgroundColor="#0004030c" font="Regular;27" foregroundColor="#0000ffff" name="epgDescription" position="1193,656" size="653,315" transparent="1" />
-    <widget alphatest="blend" name="btn_red" pixmap="IPtvDreamFHD/buttons/red.png" position="540,1020" size="28,28" />
+    <ePixmap alphatest="blend" pixmap="IPtvDream/buttons/menu.png" position="50,1015" size="105,45" zPosition="3" />
+    <ePixmap alphatest="blend" pixmap="IPtvDream/buttons/info.png" position="160,1015" size="105,45" zPosition="3" />
+   <widget alphatest="blend" name="btn_red" pixmap="IPtvDreamFHD/buttons/red.png" position="540,1020" size="28,28" />
     <widget backgroundColor="#0004030c" font="Regular;34" foregroundColor="#00ffffff" name="key_red" position="585,1016" size="346,36" transparent="1" zPosition="1" />
     <ePixmap alphatest="blend" pixmap="IPtvDreamFHD/buttons/green.png" position="975,1020" size="28,28" />
     <widget backgroundColor="#0004030c" font="Regular;34" foregroundColor="#00ffffff" name="key_green" position="1020,1016" size="346,36" transparent="1" zPosition="1" />
@@ -144,6 +149,8 @@
     <widget font="Regular;39" foregroundColor="#00ffffff" name="epgTime" position="47,758" size="195,48" />
     <widget font="Regular;39" foregroundColor="#00ffffff" name="epgDuration" position="456,758" size="180,48" />
     <widget font="Regular;32" foregroundColor="#00b7c8ee" halign="right" name="epgDate" position="1070,767" size="182,45" />
+    <ePixmap alphatest="blend" pixmap="IPtvDream/buttons/menu.png" position="1080,720" size="105,45" zPosition="3" />
+    <ePixmap alphatest="blend" pixmap="IPtvDream/buttons/info.png" position="1190,720" size="105,45" zPosition="3" />
     <widget alphatest="blend" name="btn_red" pixmap="IPtvDreamFHD/buttons/red.png" position="657,768" size="28,28" />
     <widget font="Regular;30" foregroundColor="#00ffffff" name="key_red" position="699,764" size="282,36" transparent="1" zPosition="1" />
   </screen>

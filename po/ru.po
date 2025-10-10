@@ -292,7 +292,7 @@ msgid "Play"
 msgstr "Вкл."
 
 msgid "Player ID"
-msgstr "ID проигрывателя"
+msgstr "ID плеера(тип сервиса)"
 
 msgid "Playlist"
 msgstr "Плейлист"
@@ -515,3 +515,46 @@ msgstr "IPtvDream - автор technic"
 
 msgid "The cursor in the channel selector should be on the DVB service"
 msgstr "Курсор в селекторе каналов должен быть на DVB сервисе"
+
+msgid "Default recordings start time for archive"
+msgstr "Дефолтное время старта записей для архива"
+
+msgid "Time input"
+msgstr "Ввод времени"
+
+msgid "Time"
+msgstr "Время"
+
+msgid "Instant record"
+msgstr "Немедленная запись"
+
+msgid "No instant recording support!"
+msgstr "Немедленная запись не доступна!"
+
+msgid "Open timers list"
+msgstr "Открыть список таймеров"
+
+msgid "Search '%s' in TMBD"
+msgstr "Поиск '%s' в TMBD"
+
+msgid "Add record timer for '%s'"
+msgstr "Добавить таймер записи для '%s'"
+
+msgid "Record available for 'Player ID' 1 or 4097(only using Gstreamer)"
+msgstr "Запись доступна для 'ID плеера' 1 или 4097(только Gstreamer)"
+
+msgid ""
+"Timer '%s' added!\n"
+"\n"
+" Start: %s End: %s"
+msgstr ""
+"Таймер '%s' добавлен!\n"
+"\n"
+" Старт: %s Окончание: %s"
+
+msgid ""
+"Warning!\n"
+"It is possible that the recording times %s timers from one server%s overlap."
+msgstr ""
+"Внимание\n"
+"Возможно, что время записи %s таймеров с одного сервера%s перекрывается."
