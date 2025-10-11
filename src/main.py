@@ -27,6 +27,11 @@ except:
 	TMBD = None
 
 try:
+	from Plugins.Extensions.IMDb.plugin import IMDB
+except:
+	IMDB = None
+
+try:
 	from Screens import Standby
 except:
 	Standby = None
@@ -2394,6 +2399,8 @@ class IPtvDreamEpg(Screen):
 		entry = entry[0]
 		if TMBD:
 			actions += [(_("Search '%s' in TMBD") % entry.name, self.runTMBD)]
+		if IMDB:
+			actions += [(_("Search '%s' in IMDB") % entry.name, self.openIMDB)]
 		if entry.begin > syncTime():
 			actions += [(_("Set zap time to '%s'") % entry.begin.strftime("%d.%m - %H:%M"), self.zapTimerPrerare)]
 		if availabilityRecordTimers and (entry.end_timestamp - entry.begin_timestamp) > 60 and not self.db.channels[self.cid].is_protected and (self.db.channels[self.cid].has_archive and entry.begin < syncTime() and entry.end < syncTime() or entry.begin > syncTime()):
@@ -2511,6 +2518,15 @@ class IPtvDreamEpg(Screen):
 		else:
 			self.showInfo()
 
+	def openIMDB(self):
+		entry = self.list.getCurrent()
+		if not entry:
+			return
+		if IMDB:
+			eventname = entry[0].name
+			if eventname:
+				self.session.open(IMDB, eventname, False)
+
 	def showInfo(self):
 		entry = self.list.getCurrent()
 		if not entry:
@@ -2619,6 +2635,8 @@ class IPtvDreamEpgInfo(Screen):
 		entry = self.entry
 		if TMBD:
 			actions += [(_("Search '%s' in TMBD") % entry.name, self.runTMBD)]
+		if IMDB:
+			actions += [(_("Search '%s' in IMDB") % entry.name, self.openIMDB)]
 		if entry.begin > syncTime():
 			actions += [(_("Set zap time to '%s'") % entry.begin.strftime("%d.%m - %H:%M"), self.addZapTimer)]
 		if availabilityRecordTimers and (entry.end_timestamp - entry.begin_timestamp) > 60 and not self.channel.is_protected and (self.channel.has_archive and entry.begin < syncTime() and entry.end < syncTime() or entry.begin > syncTime()):
@@ -2649,6 +2667,12 @@ class IPtvDreamEpgInfo(Screen):
 			eventname = self.entry.name
 			if eventname:
 				self.session.open(TMBD, eventname, False)
+
+	def openIMDB(self):
+		if IMDB:
+			eventname = self.entry.name
+			if eventname:
+				self.session.open(IMDB, eventname, False)
 
 	def hasArchive(self):
 		return self.channel.has_archive and self.entry.begin < syncTime()

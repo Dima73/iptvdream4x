@@ -537,6 +537,9 @@ msgstr "Открыть список таймеров"
 msgid "Search '%s' in TMBD"
 msgstr "Поиск '%s' в TMBD"
 
+msgid "Search '%s' in IMDB"
+msgstr "Поиск '%s' в IMDB"
+
 msgid "Add record timer for '%s'"
 msgstr "Добавить таймер записи для '%s'"
 
