@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # Simple HTTP Live Streaming gateway.
@@ -19,16 +18,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function
 
+from __future__ import print_function
 import socket
 from six.moves import urllib_request, urllib_parse
-import time
-import datetime
+from time import sleep
+from datetime import datetime
 from six.moves.BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from six.moves.socketserver import ThreadingMixIn
 import logging
 from logging.handlers import RotatingFileHandler
+from sys import version_info
+
+py3 = False
+if version_info[0] >= 3:
+	py3 = True
 
 SUPPORTED_VERSION = 3
 USER_AGENT = "hlsgw/0.1"
@@ -66,7 +70,10 @@ def isM3U8Valid(conn):
 		enc = 'iso-8859-1'
 	else:
 		raise Exception("Stream MIME type or file extension not recognized")
-	line = conn.readline().rstrip('\r\n')
+	if py3:
+		line = conn.readline().decode(enc).rstrip('\r\n')
+	else:
+		line = conn.readline().rstrip('\r\n')
 	if line != '#EXTM3U':
 		raise Exception("Stream is not in M3U format: %s" % line)
 	return enc
@@ -76,9 +83,15 @@ def getM3U8Lines_iterator(url):
 	req = urllib_request.Request(url=url, headers={'User-Agent': USER_AGENT})
 	con = urllib_request.urlopen(url=req, timeout=10)
 	enc = isM3U8Valid(con)
-	for l in con:
-		if l.startswith('#EXT') or not l.startswith('#'):
-			yield l.rstrip('\r\n').decode(enc)
+	if py3:
+		lines = con.read().decode(enc)
+		for l in lines.splitlines():
+			if l.startswith('#EXT') or not l.startswith('#'):
+				yield l.rstrip('\r\n')
+	else:
+		for l in con:
+			if l.startswith('#EXT') or not l.startswith('#'):
+				yield l.rstrip('\r\n').decode(enc)
 
 
 def parseM3U8Tag(line):
@@ -162,13 +175,16 @@ def serveHLS(url, write_cb, bitrate=0):
 
 	while True:
 		if bitrate:
-			bitrate -= (bitrate/10)
+			bitrate -= (bitrate // 10)
 		if len(variants):
 			url = urllib_parse.urljoin(root_url, getBestBitrate(variants, bitrate))
 
-		media_start_time = datetime.datetime.now()
+		media_start_time = datetime.now()
 		media_bytes_total = 0
-		data = ''
+		if py3:
+			data = b''
+		else:
+			data = ''
 		for media in list(getM3U8MediaList(url)):
 			if media is None:
 				continue
@@ -177,34 +193,40 @@ def serveHLS(url, write_cb, bitrate=0):
 				for chunk in readM3U8Chunks(urllib_parse.urljoin(url, media_url), targetduration or duration):
 					data += chunk
 					media_bytes_total += len(chunk)
-					if buffering_needed and len(data) < 15000000/8:
+					if buffering_needed and len(data) < 15000000 // 8:
 						continue
 					write_cb(data)
-					data = ''
+					if py3:
+						data = b''
+					else:
+						data = ''
 					buffering_needed = False
 				if data:
 					write_cb(data)
-					data = ''
+					if py3:
+						data = b''
+					else:
+						data = ''
 				last_seq = seq
 				changed = 1
 		if len(variants):
-			bitrate = int((media_bytes_total*8) / (datetime.datetime.now() - media_start_time).total_seconds())
+			bitrate = int((media_bytes_total*8) // (datetime.now() - media_start_time).total_seconds())
 		if changed == 1:
 			# initial minimum reload delay
-			delta = (datetime.datetime.now() - media_start_time).total_seconds()
+			delta = (datetime.now() - media_start_time).total_seconds()
 			if delta < duration:
-				time.sleep(duration - delta)
+				sleep(duration - delta)
 			else:
 				buffering_needed = True
 		elif changed == 0:
 			# first attempt
-			time.sleep(targetduration*0.5)
+			sleep(targetduration*0.5)
 		elif changed == -1:
 			# second attempt
-			time.sleep(targetduration*1.5)
+			sleep(targetduration*1.5)
 		else:
 			# third attempt and beyond
-			time.sleep(targetduration*3.0)
+			sleep(targetduration*3.0)
 		changed -= 1
 
 

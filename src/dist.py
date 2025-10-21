@@ -1,4 +1,4 @@
 NAME = "all"
 TITLE = "All"
-VERSION = "4.124"
+VERSION = "4.125"
 EPGSERVER = "206.189.49.94"

@@ -566,7 +566,7 @@ class IPtvDreamStreamPlayer(
 		cid = self.cid
 		if self.cfg.use_hlsgw.value:
 			url = "http://localhost:7001/url=%s" % urllib_parse.quote(url)
-		trace("play", url)
+		trace("playUrl", url)
 		ref = eServiceReference(int(self.cfg.playerid.value), 0, url)
 		ref.setName(self.db.channels[cid].name)
 		ref.setData(1, cid)
@@ -2452,8 +2452,8 @@ class IPtvDreamEpg(Screen):
 				begin = date
 				end = date + duration
 			url = self.db.getStreamUrl(self.cid, None, currtime)
-			if self.cfg.use_hlsgw.value:
-				url = "http://localhost:7001/url=%s" % urllib_parse.quote(url)
+			#if self.cfg.use_hlsgw.value:
+			#	url = "http://localhost:7001/url=%s" % urllib_parse.quote(url)
 			serviceref = eServiceReference(int(self.cfg.playerid.value), 0, url)
 			serviceref.setName(self.db.channels[self.cid].name)
 			serviceref.setData(1, self.cid)
@@ -2478,11 +2478,13 @@ class IPtvDreamEpg(Screen):
 				server = warning_text = add_text = ""
 				str_service = newEntry.service_ref.ref.toString()
 				splitref = str_service.split('/')
-				if not self.cfg.use_hlsgw.value:
-					if len(splitref) > 2 and splitref[2]:
-						server = splitref[2]
-				elif len(splitref) > 5 and splitref[5]:
-					server = splitref[5]
+				if len(splitref) > 2 and splitref[2]:
+					server = splitref[2]
+				#if not self.cfg.use_hlsgw.value:
+				#	if len(splitref) > 2 and splitref[2]:
+				#		server = splitref[2]
+				#elif len(splitref) > 5 and splitref[5]:
+				#	server = splitref[5]
 				if server:
 					try:
 						timersrecords = self.session.nav.RecordTimer.timer_list[:]
