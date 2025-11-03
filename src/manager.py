@@ -705,7 +705,6 @@ class Runner(object):
 		self.hlsgw.stop()
 		if start:
 			self.hlsgw.waitstart()
-		self._running = False
 
 	def closed(self, *args):
 		self.hlsgw.stop()
