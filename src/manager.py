@@ -482,9 +482,10 @@ manager = Manager()
 
 
 class IPtvDreamManager(Screen):
-	def __init__(self, session):
+	def __init__(self, session, hlsgw=None):
 		Screen.__init__(self, session)
 		self.setTitle(_("IPtvDream %s. Providers list:") % VERSION)
+		self.hlsgw = hlsgw
 		self["key_red"] = Label(_("Exit"))
 		self["key_green"] = Label(_("Setup"))
 		#self["key_yellow"] = Label(_("Web Setup"))
@@ -524,6 +525,8 @@ class IPtvDreamManager(Screen):
 	def ok(self):
 		entry = self.getSelected()
 		if entry is not None:
+			if self.hlsgw:
+				self.hlsgw(manager.getConfig(entry['name']).use_hlsgw.value)
 			self.startPlugin(entry['name'])
 
 	def setup(self):
@@ -668,6 +671,9 @@ class DaemonHelper(object):
 	def stop(self):
 		self._console.ePopen('%s stop' % self.program, self._finished)
 
+	def waitstart(self):
+		self._console.ePopen('sleep 2 && %s start' % self.program, self._finished)
+
 	def _finished(self, output, exitcode, extra_args=None):
 		trace("%s exitcode %d\n%s" % (self.program, exitcode, output.strip()))
 
@@ -680,7 +686,8 @@ class Runner(object):
 	def runPlugin(self, session, name):
 		if not self._running:
 			self._running = True
-			self.hlsgw.start()
+			if manager.getConfig(name).use_hlsgw.value:
+				self.hlsgw.start()
 			session.openWithCallback(self.closed, manager.getStarterClass(name), name)
 		else:
 			self.showWarning(session)
@@ -690,8 +697,15 @@ class Runner(object):
 			self._running = True
 			self.hlsgw.start()
 			session.openWithCallback(self.closed, IPtvDreamManager)
+			#session.openWithCallback(self.closed, IPtvDreamManager, self.hlsgwStopStart)
 		else:
 			self.showWarning(session)
+
+	def hlsgwStopStart(self, start=False):
+		self.hlsgw.stop()
+		if start:
+			self.hlsgw.waitstart()
+		self._running = False
 
 	def closed(self, *args):
 		self.hlsgw.stop()

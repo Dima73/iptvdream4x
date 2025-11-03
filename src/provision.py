@@ -29,6 +29,8 @@ except ImportError as e:
 	def _(text):
 		return text
 
+from .layer import enigma2Qt
+
 pluginConfig = config.plugins.IPtvDream = ConfigSubsection()
 
 # Revision of applied provision (setup) tasks
@@ -111,10 +113,7 @@ class ProvisionScreen(MessageBox):
 		result, retval = yield ConsoleTask("opkg update")
 		if retval != 0:
 			errors += 1
-			yield ScreenTask(
-				self.session, MessageBox,
-				_("Failed to update package list!") + " (ret=%d)\n%s" % (retval, result),
-				MessageBox.TYPE_WARNING, timeout=5)
+			yield ScreenTask(self.session, MessageBox, _("Failed to update package list!") + " (ret=%d)\n%s" % (retval, result), MessageBox.TYPE_WARNING, timeout=5)
 
 		self["text"].setText(_("Checking depends"))
 		install_list = []
@@ -140,7 +139,7 @@ class ProvisionScreen(MessageBox):
 			else:
 				install_list.append("python3-six")
 
-		if not commandExists("exteplayer3"):
+		if not enigma2Qt and not commandExists("exteplayer3"):
 			install_list.append("exteplayer3")
 
 		for pkg in install_list:
@@ -148,33 +147,25 @@ class ProvisionScreen(MessageBox):
 			result, retval = yield ConsoleTask("opkg install %s" % pkg)
 			if retval != 0:
 				errors += 1
-				yield ScreenTask(
-					self.session, MessageBox,
-					_("Failed to install %s!") % pkg + " (ret=%d)\n%s" % (retval, result),
-					MessageBox.TYPE_WARNING, timeout=5)
-		try:
-			from Plugins.SystemPlugins.ServiceApp import serviceapp_client
-		except ImportError as e:
-			trace(e)
-			self["text"].setText(_("Installing %s") % "eServiceApp")
-			result, retval = yield ConsoleTask("opkg install enigma2-plugin-systemplugins-serviceapp")
-			if retval != 0:
-				result, retval = yield ConsoleTask("opkg install enigma2-plugin-extensions-serviceapp")
+				yield ScreenTask(self.session, MessageBox, _("Failed to install %s!") % pkg + " (ret=%d)\n%s" % (retval, result), MessageBox.TYPE_WARNING, timeout=5)
+		if not enigma2Qt:
+			try:
+				from Plugins.SystemPlugins.ServiceApp import serviceapp_client
+			except ImportError as e:
+				trace(e)
+				self["text"].setText(_("Installing %s") % "eServiceApp")
+				result, retval = yield ConsoleTask("opkg install enigma2-plugin-systemplugins-serviceapp")
 				if retval != 0:
-					errors += 1
-					yield ScreenTask(
-						self.session, MessageBox,
-						_("Failed to install %s!") % "eServiceApp" + " (ret=%d)\n%s" % (retval, result),
-						MessageBox.TYPE_WARNING, timeout=5)
+					result, retval = yield ConsoleTask("opkg install enigma2-plugin-extensions-serviceapp")
+					if retval != 0:
+						errors += 1
+						yield ScreenTask(self.session, MessageBox, _("Failed to install %s!") % "eServiceApp" + " (ret=%d)\n%s" % (retval, result), MessageBox.TYPE_WARNING, timeout=5)
 
 		self["text"].setText(_("Finished!"))
 		if errors == 0:
-			yield ScreenTask(
-				self.session, MessageBox,
-				_("Setup finished without errors."), MessageBox.TYPE_INFO, timeout=5)
+			yield ScreenTask(self.session, MessageBox, _("Setup finished without errors."), MessageBox.TYPE_INFO, timeout=5)
 		else:
-			yield ScreenTask(
-				self.session, MessageBox, _("Setup finished with %d errors.") % errors, MessageBox.TYPE_WARNING)
+			yield ScreenTask(self.session, MessageBox, _("Setup finished with %d errors.") % errors, MessageBox.TYPE_WARNING)
 
 		self.updateRevision()
 		trace("Finished.")
