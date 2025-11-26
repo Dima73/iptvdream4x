@@ -686,8 +686,9 @@ class Runner(object):
 	def runPlugin(self, session, name):
 		if not self._running:
 			self._running = True
-			if manager.getConfig(name).use_hlsgw.value:
-				self.hlsgw.start()
+			self.hlsgw.start()
+			#if manager.getConfig(name).use_hlsgw.value:
+			#	self.hlsgw.start()
 			session.openWithCallback(self.closed, manager.getStarterClass(name), name)
 		else:
 			self.showWarning(session)

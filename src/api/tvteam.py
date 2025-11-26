@@ -43,17 +43,13 @@ class OTTProvider(OfflineFavourites, JsonSettings):
 		self.trace("Username", self.username)
 		self.sid = None
 		self._tokens = []
-		response = self._getJson(self.site, {
-			'userLogin': self.username,
-			'userPasswd': md5(self.password.encode('utf-8')).hexdigest(),
-		}, reauth=False)
+		response = self._getJson(self.site, {'userLogin': self.username, 'userPasswd': md5(self.password.encode('utf-8')).hexdigest(),}, reauth=False)
 		self.sid = response['sessionId']
 		self.trace("Session", self.sid)
 
 	def _getJson(self, url, params, reauth=True):
 		if self.sid is not None:
 			params['sessionId'] = self.sid
-
 		try:
 			self.trace(url, params.get('apiAction', 'AUTH'))
 			self.trace(url + urllib_parse.urlencode(params))
@@ -78,48 +74,36 @@ class OTTProvider(OfflineFavourites, JsonSettings):
 		return json['data']
 
 	def setChannelsList(self):
-		data = self._getJson(self.site, {
-			'apiAction': 'getUserChannels',
-			'resultType': 'tree',
-		})
+		data = self._getJson(self.site, {'apiAction': 'getUserChannels', 'resultType': 'tree',})
 		number = 0
 		favorites = False
-		for g in data['userChannelsTree']:
-			gid = int(g['groupId'])
-			channels = []
-			if gid > 0 and not favorites:
-				favorites = True
-				number = 0
-			for c in g['channelsList']:
-				cid = int(c['channelId'])
-				number += 1
-				channel = Channel(
-					cid, u2str(c['channelName']),
-					number, int(c['archiveLen']) > 0, bool(int(c['isPorno']))
-				)
-				self.channels[cid] = channel
-				self.channels_data[cid] = {
-					'logo': u2str(c['channelLogo']),
-					'url': u2str(c['liveLink']),
-				}
-				channels.append(channel)
-			self.groups[gid] = Group(gid, u2str(g['groupName']), channels)
+		try:
+			for g in data['userChannelsTree']:
+				gid = int(g['groupId'])
+				channels = []
+				if gid > 0 and not favorites:
+					favorites = True
+					number = 0
+				for c in g['channelsList']:
+					cid = int(c['channelId'])
+					number += 1
+					channel = Channel(cid, u2str(c['channelName']), number, int(c['archiveLen']) > 0, bool(int(c['isPorno'])))
+					self.channels[cid] = channel
+					self.channels_data[cid] = {'logo': u2str(c['channelLogo']), 'url': u2str(c['liveLink']),}
+					channels.append(channel)
+				self.groups[gid] = Group(gid, u2str(g['groupName']), channels)
+		except Exception as e:
+			self.trace("Failed to parse: %s" % str(e))
 
 	def getStreamUrl(self, cid, pin, time=None):
 		if self.channels[cid].is_protected:
 			try:
-				self._getJson(self.site, {
-					'apiAction': 'pornoPinCodeValidation',
-					'pornoPinCode': pin
-				})
+				self._getJson(self.site, {'apiAction': 'pornoPinCodeValidation', 'pornoPinCode': pin})
 			except APIException as e:
 				raise APILoginFailed(str(e))
 
 		if not self._tokens:
-			data = self._getJson(self.site, {
-				'apiAction': 'getRandomTokens',
-				'cnt': 30,
-			})
+			data = self._getJson(self.site, {'apiAction': 'getRandomTokens', 'cnt': 30,})
 			self._tokens = [u2str(t) for t in data['tokens']]
 		token = self._tokens.pop()
 
@@ -129,23 +113,20 @@ class OTTProvider(OfflineFavourites, JsonSettings):
 		return url + "?token=%s&utc=%s" % (token, time.strftime('%s'))
 
 	def getDayEpg(self, cid, date):
-		data = self._getJson(self.site, {
-			'apiAction': 'getTvProgram',
-			'channelId': cid,
-		})
-		return [
-			EPG(
-				int(e['prStartSec']), int(e['prStopSec']),
-				u2str(e['prTitle']), u2str(e['prSubTitle'])
-			) for e in data['tvProgram']
-		]
+		data = self._getJson(self.site, {'apiAction': 'getTvProgram', 'channelId': cid,})
+		try:
+			return [EPG(int(e['prStartSec']), int(e['prStopSec']), u2str(e['prTitle']), u2str(e['prSubTitle'])) for e in data['tvProgram']]
+		except Exception as e:
+			self.trace("Failed to parse: %s" % str(e))
+			return []
 
 	def getChannelsEpg(self, cids):
 		data = self._getJson(self.site, {'apiAction': 'getCurrentPrograms'})
-		for cid, ps in data['currentPrograms'].items():
-			yield (int(cid), [
-				EPG(int(e['prStartSec']), int(e['prStopSec']), u2str(e['prTitle'])) for e in ps
-			])
+		try:
+			for cid, ps in data['currentPrograms'].items():
+				yield (int(cid), [EPG(int(e['prStartSec']), int(e['prStopSec']), u2str(e['prTitle'])) for e in ps])
+		except Exception as e:
+			self.trace("Failed to parse: %s" % str(e))
 
 	def getPiconUrl(self, cid):
 		picon_url = self.channels_data[cid]['logo']
