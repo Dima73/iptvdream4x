@@ -12,7 +12,6 @@ from __future__ import print_function
 
 # system imports
 from six.moves.urllib_error import HTTPError
-
 # plugin imports
 from .abstract_api import JsonSettings
 from .m3u import M3UProvider
@@ -31,22 +30,29 @@ class OTTProvider(JsonSettings, M3UProvider):
 
 	def __init__(self, username, password):
 		super(OTTProvider, self).__init__(username, password)
-		self.site = "http://technic.cf/epg-smart/"
-		self.playlist_url = "http://pl.is-a-player.com/ott/m3u/%s/playlist.m3u" % username
+		self.site = "http://json.srv4you.net/epg-server"
+		self.playlist_url = [
+			"http://srv4you.net/pl/m3u/%s/pl.m3u" % username,
+			"http://pl.is-a-player.com/ott/m3u/%s/playlist.m3u" % username
+		]
 
 	def start(self):
 		self._downloadTvgMap()
-		try:
-			self._parsePlaylist(self.readHttp(self.playlist_url).split(b'\n'))
-		except HTTPError as e:
-			self.trace("HTTPError:", e, type(e), e.getcode())
-			if e.code in (403, 404):
-				raise APILoginFailed(e)
-			else:
+		for idx, url in enumerate(self.playlist_url):
+			try:
+				self._parsePlaylist(self.readHttp(url).split(b'\n'))
+				break
+			except HTTPError as e:
+				self.trace("HTTPError:", e, type(e), e.getcode())
+				if e.code in (403, 404):
+					if idx == len(self.playlist_url) - 1:
+						raise APILoginFailed(e)
+					continue
+				else:
+					raise APIException(e)
+			except IOError as e:
+				self.trace("IOError:", e, type(e))
 				raise APIException(e)
-		except IOError as e:
-			self.trace("IOError:", e, type(e))
-			raise APIException(e)
 
 	def setChannelsList(self):
 		# Channels are downloaded during start, to allow handling login exceptions
