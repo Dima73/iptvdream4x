@@ -31,8 +31,8 @@ class OTTProvider(OfflineFavourites):
 
 	def __init__(self, username, password):
 		super(OTTProvider, self).__init__(username, password)
-		self.site = "http://cbilling.eu/enigma"
-		self.api_site = "http://protected-api.com"
+		self.site = "https://cb-media1.com/enigma"
+		self.api_site = "https://cb-media1.com"
 		self._token = password
 		self.web_names = {}
 		self.urls = {}
