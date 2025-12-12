@@ -504,13 +504,13 @@ class IPtvDreamConfig(ConfigListScreen, Screen):
 		self["actions_kbd"] = ActionMap(["ColorActions"], {
 			"blue": self.openKeyboard
 		}, -2)
-		self["actions_kbd"].setEnabled(False)
+		self["actions_kbd"].setEnabled(True)
 
 		self["key_red"] = Label(_("Cancel"))
 		self["key_green"] = Label(_("OK"))
 		self["key_yellow"] = Label(_("Logout"))
 		self["key_blue"] = Label(_("Keyboard"))
-		self["Keyboard"] = Boolean(False)
+		self["Keyboard"] = Boolean(True)
 
 		self.config_repository = config_repository
 		cfg_list = config_repository.getConfigList()
@@ -529,32 +529,21 @@ class IPtvDreamConfig(ConfigListScreen, Screen):
 			self["actions_kbd"].setEnabled(True)
 			self["Keyboard"].boolean = True
 			self["key_blue"].show()
+			self["key_blue"].setText(_("Keyboard"))
 		else:
 			self["actions_kbd"].setEnabled(False)
 			self["Keyboard"].boolean = False
 			self["key_blue"].hide()
+			self["key_blue"].setText(" ")
 
 	def openKeyboard(self):
 		c = self["config"].getCurrent()
-		try:
+		if c and isinstance(c[1], (ConfigSearchText, ConfigNumberText)):
 			def keyTextCallback(callback=None):
 				if callback is not None:
 					self["config"].getCurrent()[1].setValue(callback)
 					self["config"].invalidate(self["config"].getCurrent())
-		except:
-			raise Exception("Callback save method error")
-		try:
-			cb = self.VirtualKeyBoardCallback
-		except AttributeError:
-			try:
-				cb = self.keyTextCallback
-			except AttributeError:
-				try:
-					cb = keyTextCallback
-				except:
-					raise Exception("Callback method not found")
-					return
-		self.session.openWithCallback(cb, VirtualKeyBoard, c[0], c[1].getValue(), ['en_EN'])
+			self.session.openWithCallback(keyTextCallback, VirtualKeyBoard, c[0], c[1].getValue(), ['en_EN'])
 
 	def keySave(self):
 		trace("Save config")
