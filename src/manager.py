@@ -48,8 +48,11 @@ from .loc import translate as _
 from .settings import IPtvDreamConfig, IPtvDreamWebConfig, SettingsRepository, WebConfig
 from .main import IPtvDreamStreamPlayer, IPtvDreamChannels
 
-PLAYERS = [('1', "enigma2 ts (1)"), ('4097', "Gstreamer/ServiceHisilicon (4097)"), ('5002', "exteplayer3 (5002)")]
-KEYMAPS = [('enigma', 'enigma'), ('neutrino', 'neutrino')]
+PLAYERS = [("1", "enigma2 TS (1:)"), ("4097", "Gstreamer/ServiceHisilicon (4097:)"), ("5002", "exteplayer3 (5002:)")]
+KEYMAPS = [("enigma", "enigma"), ("neutrino", "neutrino")]
+# 4097:0:1:0:0:0:0:0:0:1:URL:NAME (buffering enabled)
+# 4097:0:1:0:0:0:0:0:0:3:URL:NAME (progressive download and buffering enabled)
+BUFFERING = [("0", _("no")), ("1", _("yes - only Gstreamer (4097:)")), ("3", _("yes and progressive download - only Gstreamer (hard drive is required /hdd/movie)"))]
 pluginConfig.keymap_type = ConfigSelection(KEYMAPS)
 pluginConfig.show_event_progress_in_servicelist = ConfigYesNo(default=True)
 pluginConfig.show_number_in_servicelist = ConfigYesNo(default=False)
@@ -411,8 +414,9 @@ class Manager(object):
 					self.config[name].parental_code = ConfigNumberText()
 					self.config[name].in_menu = ConfigYesNo(default=False)
 					self.config[name].in_extensions = ConfigYesNo(default=False)
-					self.config[name].playerid = ConfigSelection(PLAYERS, default='4097')
+					self.config[name].playerid = ConfigSelection(PLAYERS, default="4097")
 					self.config[name].use_hlsgw = ConfigYesNo(default=False)
+					self.config[name].buffering = ConfigSelection(BUFFERING, default="0")
 					self.config[name].last_played = ConfigText()
 					self.config[name].playlist_name = ConfigText()
 

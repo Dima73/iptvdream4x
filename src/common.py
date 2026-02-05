@@ -203,10 +203,14 @@ class AutoAudioSelection(Screen):
 		n = audio and audio.getNumberOfTracks() or 0
 		if n > 0:
 			selected_audio = audio.getCurrentTrack()
+			try:
+				selected_language = audio.getTrackInfo(selected_audio).getLanguage()
+			except:
+				selected_language = ""
 			for x in range(n):
 				language = audio.getTrackInfo(x).getLanguage()
 				trace("audio scan language:", x, language)
-				if language.find('rus') > -1 and x != selected_audio:
+				if "rum" not in language and language.find("ru") > -1 and x != selected_audio and "ru" not in selected_language:
 					audio.selectTrack(x)
 					break
 

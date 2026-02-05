@@ -102,6 +102,7 @@ class SettingsRepository(object):
 		appendEntry(_("Show in main menu"), 'in_menu')
 		appendEntry(_("Show in extensions list"), 'in_extensions')
 		appendEntry(_("Player ID"), 'playerid')
+		appendEntry(_("Enable buffering"), 'buffering')
 		appendEntry(_("Use HLS proxy"), 'use_hlsgw')
 
 		return settings
@@ -513,11 +514,42 @@ class IPtvDreamConfig(ConfigListScreen, Screen):
 		self["Keyboard"] = Boolean(True)
 
 		self.config_repository = config_repository
-		cfg_list = config_repository.getConfigList()
-		ConfigListScreen.__init__(self, cfg_list, session)
+		self.cfg_list = config_repository.getConfigList()
+		ConfigListScreen.__init__(self, [], session)
+		self.initConfig()
 
 		self.setTitle(_("Configuration of %s") % config_repository.title)
 		self["config"].onSelectionChanged.append(self.showHideKeyboardButton)
+
+	def initConfig(self):
+		cur_list = []
+		playerid = None
+		playlist = None
+		for entry in self.cfg_list:
+			if entry[0] == _("Player ID"):
+				cur_list.append(entry)
+				playerid = entry[1]
+			elif entry[0] == _("Enable buffering"):
+				if playerid and playerid.value == "4097":
+					cur_list.append(entry)
+			elif entry[0] == _("Get playlist"):
+				cur_list.append(entry)
+				playlist = entry[1]
+			elif entry[0] == _("Playlist url"):
+				if playlist and playlist.value == "url":
+					cur_list.append(entry)
+			else:
+				cur_list.append(entry)
+		self["config"].list = cur_list
+		self["config"].setList(cur_list)
+
+	def keyLeft(self):
+		ConfigListScreen.keyLeft(self)
+		self.initConfig()
+
+	def keyRight(self):
+		ConfigListScreen.keyRight(self)
+		self.initConfig()
 
 	def showHideKeyboardButton(self):
 		c = self["config"].getCurrent()

@@ -561,3 +561,15 @@ msgid ""
 msgstr ""
 "Внимание\n"
 "Возможно, что время записи %s таймеров с одного сервера%s перекрывается."
+
+msgid "no"
+msgstr "нет"
+
+msgid "yes - only Gstreamer (4097:)"
+msgstr "да - только Gstreamer (4097:)"
+
+msgid "yes and progressive download - only Gstreamer (hard drive is required /hdd/movie)"
+msgstr "да и прогрессивная загрузка - только Gstreamer (HDD необходим /hdd/movie)"
+
+msgid "Enable buffering"
+msgstr "Включить буферизацию"

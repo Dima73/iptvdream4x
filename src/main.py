@@ -12,6 +12,7 @@
 from __future__ import print_function
 
 # system imports
+from os import system
 from datetime import datetime, timedelta
 from time import time, localtime, strftime, mktime
 from six.moves import urllib_parse
@@ -570,6 +571,10 @@ class IPtvDreamStreamPlayer(
 		ref = eServiceReference(int(self.cfg.playerid.value), 0, url)
 		ref.setName(self.db.channels[cid].name)
 		ref.setData(1, cid)
+		if self.cfg.playerid.value == "4097":
+			ref.setUnsignedData(6, int(self.cfg.buffering.value))
+			if self.cfg.buffering.value != "0":
+				system("echo 1 > /proc/sys/vm/drop_caches") 
 		#ref.setUnsignedData(1, cid)
 		self.play_service = ref
 		if availabilityRecordTimers and checkServerRecording is None:
