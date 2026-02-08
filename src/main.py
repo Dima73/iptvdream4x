@@ -1527,9 +1527,6 @@ class IPtvDreamChannels(Screen):
 		self["epgName"] = Label()
 		self["epgTime"] = Label()
 		self["epgDescription"] = Label()
-		self["epgNextTime"] = Label()
-		self["epgNextName"] = Label()
-		self["epgNextDescription"] = Label()
 
 		self.current_event_info = ""
 		self.current_cid = None
@@ -1769,7 +1766,6 @@ class IPtvDreamChannels(Screen):
 		if self.mode == self.GROUPS or channel is None:
 			self["channelName"].setText("")
 			self.hideEpgLabels()
-			self.hideEpgNextLabels()
 		else:
 			self["channelName"].setText(channel.name)
 			self["channelName"].show()
@@ -1792,7 +1788,7 @@ class IPtvDreamChannels(Screen):
 						duration_time = int(curr.duration() / 60)
 					except:
 						duration_time = -1
-					if duration_time >= 0 and duration_time < 1800:
+					if duration_time >= 0 and duration_time < 3600:
 						duration = _("%d min") % duration_time
 						self["epgTime"].setText("%s - %s (%s)" % (curr.begin.strftime("%H:%M"), curr.end.strftime("%H:%M"), duration))
 					else:
@@ -1803,32 +1799,21 @@ class IPtvDreamChannels(Screen):
 				if curr.name:
 					self.current_event_info = curr.name
 				self["epgName"].show()
-				self["epgDescription"].setText(curr.description)
+				next = self._worker.getNext(channel.cid)
+				if next:
+					self["epgDescription"].setText(curr.description + "\n\n" + _("Next: ") + str(next))
+				else:
+					self["epgDescription"].setText(curr.description)
 				self["epgDescription"].show()
 				self._info_part.updateLayout()
 			else:
 				self.hideEpgLabels()
-			curr = self._worker.getNext(channel.cid)
-			if curr:
-				self["epgNextTime"].setText("%s - %s" % (curr.begin.strftime("%H:%M"), curr.end.strftime("%H:%M")))
-				self["epgNextName"].setText(curr.name)
-				self["epgNextDescription"].setText(curr.description)
-				self["epgNextName"].show()
-				self["epgNextTime"].show()
-				self["epgNextDescription"].show()
-			else:
-				self.hideEpgNextLabels()
 
 	def hideEpgLabels(self):
 		self["epgName"].hide()
 		self["epgTime"].hide()
 		self["epgProgress"].hide()
 		self["epgDescription"].hide()
-
-	def hideEpgNextLabels(self):
-		self["epgNextName"].hide()
-		self["epgNextTime"].hide()
-		self["epgNextDescription"].hide()
 
 	def showGroups(self):
 		self.mode = self.GROUPS

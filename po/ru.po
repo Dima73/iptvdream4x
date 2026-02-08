@@ -573,3 +573,6 @@ msgstr "да и прогрессивная загрузка - только Gstre
 
 msgid "Enable buffering"
 msgstr "Включить буферизацию"
+
+msgid "Next: "
+msgstr "Далее: "
