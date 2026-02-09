@@ -1799,9 +1799,9 @@ class IPtvDreamChannels(Screen):
 				if curr.name:
 					self.current_event_info = curr.name
 				self["epgName"].show()
-				next = self._worker.getNext(channel.cid)
+				next = self._worker.getNext(channel.cid, True)
 				if next:
-					self["epgDescription"].setText(curr.description + "\n\n" + _("Next: ") + str(next))
+					self["epgDescription"].setText(curr.description + "\n" + _("Next: ") + str(next))
 				else:
 					self["epgDescription"].setText(curr.description)
 				self["epgDescription"].show()

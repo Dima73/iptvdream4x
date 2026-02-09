@@ -109,11 +109,24 @@ class LiveEpgWorker(object):
 	def get(self, cid):
 		try:
 			return self._epg[cid][0]
-		except (KeyError, IndexError):
+		except:
 			return None
 
-	def getNext(self, cid):
-		try:
-			return self._epg[cid][1]
-		except (KeyError, IndexError):
-			return None
+	def getNext(self, cid, more=False):
+		if more:
+			try:
+				if more:
+					all = ""
+					index = 0
+					for event in self._epg[cid]:
+						index += 1
+						if index > 1:
+							all += "\n" + str(event)
+					return all
+			except:
+				return None
+		else:
+			try:
+				return self._epg[cid][1]
+			except:
+				return None
