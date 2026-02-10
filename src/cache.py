@@ -115,14 +115,13 @@ class LiveEpgWorker(object):
 	def getNext(self, cid, more=False):
 		if more:
 			try:
-				if more:
-					all = ""
-					index = 0
-					for event in self._epg[cid]:
-						index += 1
-						if index > 1:
-							all += "\n" + str(event)
-					return all
+				all = ""
+				index = 0
+				for event in self._epg[cid]:
+					index += 1
+					if index > 1:
+						all += "\n" + str(event)
+				return all
 			except:
 				return None
 		else:
