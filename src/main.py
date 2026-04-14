@@ -456,7 +456,7 @@ class IPtvDreamStreamPlayer(
 
 	def prewShowList(self):
 		try:
-			if self["archive_actions"].enabled and self.shift and self.archive_pause and not self.play_shift:
+			if self["archive_actions"].enabled and self.shift and self.archive_pause and self.play_shift != "play":
 				self.playPauseArchive(True, False)
 				return
 		except:
@@ -570,12 +570,15 @@ class IPtvDreamStreamPlayer(
 		trace("playUrl", url)
 		ref = eServiceReference(int(self.cfg.playerid.value), 0, url)
 		ref.setName(self.db.channels[cid].name)
-		ref.setData(1, cid)
+		try:
+			ref.setData(1, int(cid))
+		except:
+			ref.setData(1, 1)
 		if self.cfg.playerid.value == "4097":
 			ref.setUnsignedData(6, int(self.cfg.buffering.value))
 			if self.cfg.buffering.value != "0":
 				system("echo 1 > /proc/sys/vm/drop_caches") 
-		#ref.setUnsignedData(1, cid)
+		#ref.setUnsignedData(1, int(cid))
 		self.play_service = ref
 		if availabilityRecordTimers and checkServerRecording is None:
 			self.initMonitoringRecording()
@@ -2446,7 +2449,10 @@ class IPtvDreamEpg(Screen):
 			#	url = "http://localhost:7001/url=%s" % urllib_parse.quote(url)
 			serviceref = eServiceReference(int(self.cfg.playerid.value), 0, url)
 			serviceref.setName(self.db.channels[self.cid].name)
-			serviceref.setData(1, self.cid)
+			try:
+				serviceref.setData(1, int(self.cid))
+			except:
+				serviceref.setData(1, 1)
 			#serviceref.setUnsignedData(1, self.cid)
 			serviceref = ServiceReference(serviceref)
 			event = SetEvent(begin, end, entry.name, entry.description)
