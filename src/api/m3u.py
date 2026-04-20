@@ -65,17 +65,20 @@ class M3UProvider(OfflineFavourites):
 		:param url_regexp: pattern obtained by re.compile() containing domain and key groups
 		"""
 		m3u8 = self._locatePlaylist()
-		with open(m3u8) as f:
-			for line in f:
-				line = line.strip()
-				m = url_regexp.match(line)
-				if m:
-					self._domain = m.group(1)
-					self._key = m.group(2)
-					self.trace("found domain and key in user playlist")
-					break
+		try:
+			with open(m3u8) as f:
+				for line in f:
+					line = line.strip()
+					m = url_regexp.match(line)
+					if m:
+						self._domain = m.group(1)
+						self._key = m.group(2)
+						self.trace("found domain and key in user playlist")
+						break
+		except Exception as e:
+			self.trace("domain and key error!", e, type(e))
 		if not (self._domain and self._key):
-			raise APIException(_("Failed to parse %s playlist located at %s.") % (self.NAME, m3u8))
+			raise APIException(_("Failed to parse '%s' playlist located at '%s'.") % (self.NAME, m3u8))
 
 	def start(self):
 		url_regexp = re.compile(r"https?://([\w.]+)/iptv/(\w+)/\d+/index.m3u8")
@@ -85,18 +88,14 @@ class M3UProvider(OfflineFavourites):
 		self._downloadTvgMap()
 		try:
 			self._parsePlaylist(self.readHttp(self.playlist_url).split(b'\n'))
-		except IOError as e:
-			self.trace("error!", e, type(e))
-			#raise APIException(e)
+		except Exception as e:
+			self.trace("parsePlaylist error!", e, type(e))
 
 	def _downloadTvgMap(self):
 		self.tvg_map = {}
 		if self.TVG_MAP:
 			try:
 				self.tvg_map = json_loads(self.readHttp(self.site + "/channels"))['data']
-			except IOError as e:
-				self.trace("error!", e)
-				self.tvg_map = {}
 			except Exception as e:
 				self.trace("Failed to parse json: %s" % str(e))
 				self.tvg_map = {}
@@ -107,10 +106,13 @@ class M3UProvider(OfflineFavourites):
 		"""
 		m = self._url_regexp.match(url)
 		if m:
-			cid = int(m.group(1))
+			try:
+				cid = int(m.group(1))
+			except:
+				cid = hash(url)
 		else:
 			cid = hash(url)
-			self.trace("Failed to get cid from url", url)
+			#self.trace("Failed to get cid from url", url)
 		url = url.replace("localhost", self._domain).replace("00000000000000", self._key)
 		return Channel(cid, name, num, rec), {'tvg': tvg, 'url': url, 'logo': logo}
 
@@ -244,22 +246,17 @@ class M3UProvider(OfflineFavourites):
 	def getChannelsEpg(self, cids):
 		t = mktime(syncTime().timetuple())
 		tvgs = set(self.channels_data[cid]['tvg'] or 0 for cid in cids)
-		data = self.getJsonData(self.site + "/epg_list?", {
-			"time": int(t),
-			"ids": ",".join(map(str, tvgs)),
-		})
+		data = self.getJsonData(self.site + "/epg_list?", {"time": int(t), "ids": ",".join(map(str, tvgs)),})
 
 		for c in data['data']:
 			tvg = c['channel_id']
 			try:
 				cids = self.tvg_ids[tvg]
-			except KeyError:
+			except:
 				# self.trace("Unknown teleguide id", tvg)
 				continue
 			for cid in cids:
-				yield cid, [EPG(
-					int(e['begin']), int(e['end']), u2str(e['title']),
-					u2str(e['description'])) for e in c['programs']]
+				yield cid, [EPG(int(e['begin']), int(e['end']), u2str(e['title']), u2str(e['description'])) for e in c['programs']]
 
 	def getPiconUrl(self, cid):
 		return self.channels_data[cid]['logo']
