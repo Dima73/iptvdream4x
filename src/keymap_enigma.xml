@@ -91,6 +91,7 @@ flags="r" - onKeyRepeat
 		<key id="KEY_MENU" mapto="contextMenu" flags="m" />
 		<key id="KEY_SPACE" mapto="contextMenu" flags="m" />
 		<key id="KEY_INFO" mapto="showEPGList" flags="m" />
+		<key id="KEY_EPG" mapto="showEPGList" flags="m" />
 		<key id="KEY_CHANNELUP" mapto="nextBouquet" flags="m" />
 		<key id="KEY_CHANNELDOWN" mapto="prevBouquet" flags="m" />
 	</map>
