@@ -28,7 +28,7 @@ from Screens.ChoiceBox import ChoiceBox
 from Screens.MinuteInput import MinuteInput
 from Components.ConfigList import ConfigListScreen
 from Components.config import config, configfile, ConfigSubsection, ConfigSubDict,\
-	ConfigText, ConfigYesNo, ConfigSelection, ConfigInteger, ConfigClock
+	ConfigText, ConfigYesNo, ConfigSelection, ConfigInteger, ConfigClock, NoSave
 from Components.ActionMap import ActionMap
 from Components.Label import Label
 from Components.Input import Input
@@ -60,7 +60,7 @@ pluginConfig.alternative_number_in_servicelist = ConfigYesNo(default=False)
 pluginConfig.ok_open_servicelist = ConfigYesNo(default=False)
 pluginConfig.numbers_history = ConfigInteger(10, (1, 30))
 pluginConfig.default_start_time_archive = ConfigClock(default=mktime((1970, 1, 1, 2, 0, 0, 0, 0, 0))) # 02:00
-
+pluginConfig.first_start_time_archive = NoSave(ConfigClock(default=mktime((1970, 1, 1, 0, 30, 0, 0, 0, 0)))) # 00:30
 
 class TimeInput(ConfigListScreen, Screen):
 	skin = """<screen name="TimeInput" position="center,center" size="400,200" title="Time input">
@@ -70,8 +70,9 @@ class TimeInput(ConfigListScreen, Screen):
 		<widget source="key_green" render="Label" position="250,0" zPosition="1" size="140,40" font="Regular;19" halign="center" valign="center" transparent="1"/>
 		<widget name="config" position="10,40" size="380,150"/>
 	</screen>"""
-	def __init__(self, session, config_time):
+	def __init__(self, session, config_time, save=True):
 		self.timeinput_time = config_time
+		self.save = save
 		Screen.__init__(self, session)
 		self.setTitle(_("Time input"))
 		self["key_red"] = Label(_("Cancel"))
@@ -105,8 +106,11 @@ class TimeInput(ConfigListScreen, Screen):
 			self["config"].invalidateCurrent()
 
 	def keySave(self):
-		self.timeinput_time.save()
-		self.close((True, None))
+		if self.save:
+			self.timeinput_time.save()
+			self.close((True, None))
+		else:
+			self.close((True, self.timeinput_time.value))
 
 	def keyCancel(self):
 		self.timeinput_time.cancel()

@@ -2390,6 +2390,8 @@ class IPtvDreamEpg(Screen):
 		if not entry:
 			return
 		entry = entry[0]
+		if not self.shift and entry.begin < syncTime():
+			actions += [(_("Enable archive - forward to (hh:mm)") + (": '%s'" % entry.name), self.firstStartArchiveTime)]
 		if TMBD:
 			actions += [(_("Search '%s' in TMBD") % entry.name, self.runTMBD)]
 		if IMDB:
@@ -2504,6 +2506,28 @@ class IPtvDreamEpg(Screen):
 					warning_text = _("Warning!\nIt is possible that the recording times %s timers from one server%s overlap.") % (count, server_text)
 				if add_text:
 					self.session.open(MessageBox, add_text + warning_text, MessageBox.TYPE_INFO, timeout=6)
+
+	def firstStartArchiveTime(self):
+		entry = self.list.getCurrent()
+		if not entry:
+			return
+		entry = entry[0]
+		if self.db.channels[self.cid].has_archive and entry.begin < syncTime():
+			from .manager import TimeInput
+			dlg = self.session.openWithCallback(self.archiveTimeClosed, TimeInput, config.plugins.IPtvDream.first_start_time_archive, save=False)
+			dlg.setTitle(_("Enable archive - forward to (hh:mm)"))
+
+	def archiveTimeClosed(self, ret):
+		if len(ret) > 1 and ret[0]:
+			entry = self.list.getCurrent()
+			if not entry:
+				return
+			entry = entry[0]
+			if self.db.channels[self.cid].has_archive and entry.begin < syncTime():
+				archive = tdSec(entry.begin - syncTime())
+				first_start_time = (ret[1][0]  * 3600) + (ret[1][1]  * 60)
+				currtime = syncTime() + secTd(archive + first_start_time)
+				self.close(self.cid, currtime)
 
 	def runTMBD(self):
 		entry = self.list.getCurrent()

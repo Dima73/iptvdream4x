@@ -576,3 +576,6 @@ msgstr "Включить буферизацию"
 
 msgid "Next: "
 msgstr "Далее: "
+
+msgid "Enable archive - forward to (hh:mm)"
+msgstr "Включить архив - вперед на (чч:мм)"
