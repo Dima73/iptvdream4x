@@ -633,7 +633,7 @@ class IPtvDreamStreamPlayer(
 
 	def archiveSeekFwd(self):
 		try:
-			self.session.openWithCallback(self.fwdJumpMinutes, InputBox, title=_("Forward in minutes"), text="5", type=Input.NUMBER)
+			self.session.openWithCallback(self.fwdJumpMinutes, InputBox, title=_("Forward in minutes"), text="50", type=Input.NUMBER)
 		except:
 			try:
 				self.session.open(MessageBox, _("This image does not support correct operation of the number set!"), MessageBox.TYPE_ERROR, timeout=8)
@@ -642,7 +642,7 @@ class IPtvDreamStreamPlayer(
 
 	def archiveSeekRwd(self):
 		try:
-			self.session.openWithCallback(self.rwdJumpMinutes, InputBox, title=_("Back in minutes"), text="5", type=Input.NUMBER)
+			self.session.openWithCallback(self.rwdJumpMinutes, InputBox, title=_("Back in minutes"), text="50", type=Input.NUMBER)
 		except:
 			try:
 				self.session.open(MessageBox, _("This image does not support correct operation of the number set!"), MessageBox.TYPE_ERROR, timeout=8)

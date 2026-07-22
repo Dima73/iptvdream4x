@@ -60,14 +60,17 @@ pluginConfig.alternative_number_in_servicelist = ConfigYesNo(default=False)
 pluginConfig.ok_open_servicelist = ConfigYesNo(default=False)
 pluginConfig.numbers_history = ConfigInteger(10, (1, 30))
 pluginConfig.default_start_time_archive = ConfigClock(default=mktime((1970, 1, 1, 2, 0, 0, 0, 0, 0))) # 02:00
-pluginConfig.first_start_time_archive = NoSave(ConfigClock(default=mktime((1970, 1, 1, 0, 30, 0, 0, 0, 0)))) # 00:30
+pluginConfig.first_start_time_archive = ConfigClock(default=mktime((1970, 1, 1, 0, 30, 0, 0, 0, 0))) # 00:30
+#pluginConfig.first_start_time_archive = NoSave(ConfigClock(default=mktime((1970, 1, 1, 0, 30, 0, 0, 0, 0)))) # 00:30
 
 class TimeInput(ConfigListScreen, Screen):
 	skin = """<screen name="TimeInput" position="center,center" size="400,200" title="Time input">
 		<ePixmap pixmap="buttons/red.png" position="10,0" size="140,40" alphatest="on"/>
-		<ePixmap pixmap="buttons/green.png" position="250,0" size="140,40" alphatest="on"/>
-		<widget source="key_red" render="Label" position="10,0" zPosition="1" size="140,40" font="Regular;19" halign="center" valign="center" transparent="1"/>
-		<widget source="key_green" render="Label" position="250,0" zPosition="1" size="140,40" font="Regular;19" halign="center" valign="center" transparent="1"/>
+		<ePixmap pixmap="buttons/green.png" position="160,0" size="140,40" alphatest="on"/>
+		<ePixmap pixmap="buttons/blue.png" position="280,0" size="140,40" alphatest="on"/>
+		<widget source="key_red" render="Label" position="10,0" zPosition="1" size="140,40" font="Regular;18" halign="center" valign="center" transparent="1"/>
+		<widget source="key_green" render="Label" position="160,0" zPosition="1" size="140,40" font="Regular;18" halign="center" valign="center" transparent="1"/>
+		<widget source="key_blue" render="Label" position="280,0" zPosition="1" size="140,40" font="Regular;18" halign="center" valign="center" transparent="1"/>
 		<widget name="config" position="10,40" size="380,150"/>
 	</screen>"""
 	def __init__(self, session, config_time, save=True):
@@ -77,10 +80,15 @@ class TimeInput(ConfigListScreen, Screen):
 		self.setTitle(_("Time input"))
 		self["key_red"] = Label(_("Cancel"))
 		self["key_green"] = Label(_("OK"))
+		if not save:
+			self["key_blue"] = Label(_("Default"))
+		else:
+			self["key_blue"] = Label()
 		self["actions"] = ActionMap(["OkCancelActions", "ColorActions"],
 		{
 			"ok": self.keySave,
 			"green": self.keySave,
+			"blue": self.keyDefault,
 			"red": self.keyCancel,
 			"cancel": self.keyCancel,
 		}, -2)
@@ -105,11 +113,19 @@ class TimeInput(ConfigListScreen, Screen):
 			self.timeinput_time.increment()
 			self["config"].invalidateCurrent()
 
+	def keyDefault(self):
+		if not self.save:
+			sel = self["config"].getCurrent()
+			if sel and sel[1] == self.timeinput_time:
+				self.timeinput_time.value = [0,30]
+				self["config"].invalidateCurrent()
+
 	def keySave(self):
 		if self.save:
 			self.timeinput_time.save()
 			self.close((True, None))
 		else:
+			self.timeinput_time.save()
 			self.close((True, self.timeinput_time.value))
 
 	def keyCancel(self):
