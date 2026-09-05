@@ -22,7 +22,7 @@ plugindir = $(build)$(plugin_path)
 
 all: package
 
-pyfiles := src/__init__.py src/common.py src/dist.py src/plugin.py src/updater.py \
+pyfiles := src/__init__.py src/common.py src/compat.py src/dist.py src/plugin.py src/updater.py \
 	src/cache.py \
 	src/layer.py src/loc.py src/utils.py src/manager.py src/main.py src/settings.py \
 	src/standby.py src/virtualkb.py src/server.py src/provision.py \
@@ -148,6 +148,9 @@ bin_install := $(build)/usr/bin/hlsgw.py $(build)/usr/bin/hlsgwd.sh
 $(bin_install): $(build)/usr/bin/%: tools/%
 	install -D -m755 $< $@
 
+ifeq ($(BYTECODE),n)
+pycinstall :=
+endif
 
 install: $(pyinstall) $(pycinstall) $(datainstall) $(skin_install) $(skin-fhd_install) $(skin-contrast_install) $(skin-fhd-contrast_install) $(moinstall) $(bin_install)
 	install -d $(build)/etc/iptvdream
