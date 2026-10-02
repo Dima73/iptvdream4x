@@ -87,7 +87,8 @@ class OTTProvider(OfflineFavourites, JsonSettings):
 				for c in g['channelsList']:
 					cid = int(c['channelId'])
 					number += 1
-					channel = Channel(cid, u2str(c['channelName']), number, int(c['archiveLen']) > 0, bool(int(c['isPorno'])))
+					isPorno = bool(int(c['isPorno'])) if 'isPorno' in c else False
+					channel = Channel(cid, u2str(c['channelName']), number, int(c['archiveLen']) > 0, isPorno)
 					self.channels[cid] = channel
 					self.channels_data[cid] = {'logo': u2str(c['channelLogo']), 'url': u2str(c['liveLink']),}
 					channels.append(channel)
