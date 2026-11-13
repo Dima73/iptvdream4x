@@ -95,6 +95,8 @@ trace("timezone is GMT", Timezone)
 
 
 def tdSec(td):
+	if isinstance(td, datetime):
+		td = td - datetime.now()
 	return int((td.days * 86400) + td.seconds)
 
 

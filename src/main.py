@@ -312,6 +312,7 @@ class IPtvDreamStreamPlayer(
 		self.event = None
 		self.origProgramInfoAndEvent = None
 		self.shift = 0
+		self.old_shift = 0
 
 		self.waitMessageTimer = eTimer()
 		self.waitMessageTimer.callback.append(self.showWaitMessage)
@@ -466,7 +467,12 @@ class IPtvDreamStreamPlayer(
 
 	def play(self, cid):
 		trace("play cid =", cid)
-
+		if self.cid:
+			cur_shift = 0
+			if self.old_shift:
+				cur_shift = self.old_shift - tdSec(syncTime())
+			self.channels.history.updateShift(self.cid, cur_shift=cur_shift)
+		self.old_shift = 0
 		self.cid = cid
 		self.session.nav.stopService()
 		self.event = None
@@ -666,13 +672,16 @@ class IPtvDreamStreamPlayer(
 	def fwdJump(self, seconds):
 		trace("fwdSeek", seconds)
 		self.shift += seconds
+		self.old_shift = self.shift
 		if self.shift > 0:
 			self.setArchiveShift(0)
+			self.old_shift = 0
 		self.play(self.cid)
 
 	def rwdJump(self, seconds):
 		trace("rwdSeek", seconds)
 		self.shift -= seconds
+		self.old_shift = self.shift
 		self.play(self.cid)
 
 	def jump(self, n):
@@ -695,6 +704,7 @@ class IPtvDreamStreamPlayer(
 		if self.archive_pause and play:
 			# do unPause
 			self.shift -= tdSec(syncTime()-self.archive_pause)-ARCHIVE_TIME_FIX
+			self.old_shift = self.shift
 			self.archive_pause = None
 			self.play(self.cid)
 			self.unlockShow()
@@ -721,6 +731,7 @@ class IPtvDreamStreamPlayer(
 
 	def exitArchive(self):
 		self.setArchiveShift(0)
+		self.old_shift = 0
 		self.play(self.cid)
 
 	# EPG
@@ -830,7 +841,11 @@ class IPtvDreamStreamPlayer(
 			self.zap_service.name = self.db.channels[cid].name
 			self.zapTimer.startLongTimer(minutes * 60)
 		elif cid is not None and archive_time is not None:
-			self.setArchiveShift(tdSec(archive_time-syncTime()))  # shift < 0
+			if isinstance(archive_time, int):
+				self.setArchiveShift(archive_time)
+			else:
+				self.setArchiveShift(tdSec(archive_time-syncTime()))
+			self.old_shift = self.shift
 			self.play(cid)
 
 	def zapTimerRun(self):
@@ -911,6 +926,7 @@ class IPtvDreamStreamPlayer(
 						elif entry[1] == "live":
 							self["key_green"].setText("")
 							self.setArchiveShift(0)
+							self.old_shift = 0
 							self.play(self.cid)
 				actions = [(_("Play"), "play"),(_("Live"), "live"),]
 				self.session.openWithCallback(cb, ChoiceBox, _("Actions"), actions)
@@ -918,6 +934,7 @@ class IPtvDreamStreamPlayer(
 	def playPauseLive(self, play=True, pause=True):
 		if self.archive_pause and play:
 			self.shift -= tdSec(syncTime()-self.archive_pause)-ARCHIVE_TIME_FIX
+			self.old_shift = self.shift
 			self.archive_pause = None
 			self.play(self.cid)
 			self.unlockShow()
@@ -929,6 +946,7 @@ class IPtvDreamStreamPlayer(
 		elif pause:
 			self.shift = -38
 			self.setArchiveShift(self.shift)
+			self.old_shift = self.shift
 			self.archive_pause = syncTime()
 			self.playPauseArchive(play=False, pause=True)
 			self.play_shift = "pause"
@@ -948,6 +966,7 @@ class IPtvDreamStreamPlayer(
 	def switchChannel(self, cid):
 		# FIXME: zapping breaks archive shift
 		trace("switch channel", self.cid)
+		self.old_shift = self.shift
 		self.setArchiveShift(0)
 		self.next = None
 		self.play(cid)
@@ -1389,6 +1408,20 @@ class History(object):
 				self._history.append(add)
 				#self._index = len(self._history) - 1
 
+	def updateShift(self, curr, cur_shift=0):
+		if self.counts() > 0:
+			for s in self._history:
+				if curr and curr == s.cid:
+					s.cur_shift = cur_shift
+					break
+
+	def findShift(self, curr):
+		if self.counts() > 0:
+			for s in self._history:
+				if curr and curr == s.cid:
+					return s.cur_shift
+		return 0
+
 	def clear(self):
 		if self.counts() > 1:
 			self._history = self._history[-1:]
@@ -1445,10 +1478,11 @@ class History(object):
 
 
 class HistoryEntry(object):
-	def __init__(self, mode, gid, gr_idx, cid, ch_idx):
+	def __init__(self, mode, gid, gr_idx, cid, ch_idx, cur_shift=0):
 		self.mode = mode
 		self.gid, self.gr_idx = gid, gr_idx
 		self.cid, self.ch_idx = cid, ch_idx
+		self.cur_shift = cur_shift
 
 	def copy(self):
 		return HistoryEntry(self.mode, self.gid, self.gr_idx, self.cid, self.ch_idx)
@@ -1675,6 +1709,7 @@ class IPtvDreamChannels(Screen):
 				self.history.replace(cid)
 				self.openHistory()
 			else:
+				#self.history.append(HistoryEntry(self.mode, self.gid, 0, cid, idx, time or 0))
 				self.history.append(HistoryEntry(self.mode, self.gid, 0, cid, idx))
 				self.saved_state = self.history.now()
 			if self.history.counts() > 1:
@@ -1917,8 +1952,19 @@ class IPtvDreamChannels(Screen):
 				self["key_yellow"].setText("")
 				self.close(None)
 
+	def playHistorySelectedAsArchive(self):
+		channel = self.getSelected()
+		if not channel:
+			return
+		if self.mode == self.HISTORY and hasattr(self, "cur_shift") and self.cur_shift:
+			self.history.replace(channel.cid)
+			#self.openHistory()
+			self.close(channel.cid, self.cur_shift)
+			self.cur_shift = 0
+
 	def showMenu(self):
 		self.dlg_actions = None
+		self.cur_shift = 0
 		actions = []
 		current = self.getSelected()
 		if self.player and self.player.zap_service_running != None and self.player.zap_service != None:
@@ -1935,6 +1981,10 @@ class IPtvDreamChannels(Screen):
 				if self.history.counts() > 1:
 					curr = self.history.now()
 					if curr and curr.cid != current.cid:
+						shift = self.history.findShift(current.cid)
+						if shift:
+							self.cur_shift = shift
+							actions += [(_('Play "%s" as saved archive') % current.name, self.playHistorySelectedAsArchive)]
 						actions += [(_('Delete "%s" from history list') % current.name, self.delHistoryCurrrent)]
 					actions += [(_('Clear history list'), self.clearHistoryList)]
 				if current.has_archive:
