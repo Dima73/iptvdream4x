@@ -580,5 +580,5 @@ msgstr "Далее: "
 msgid "Enable archive - forward to (hh:mm)"
 msgstr "Включить архив - вперед на (чч:мм)"
 
-msgid "Play \"%s\" as saved archive"
-msgstr "Воспроизвести \"%s\" как сохраненный архив"
+msgid "Play as saved archive \"%s\""
+msgstr "Запуск как сохраненный архив \"%s\""

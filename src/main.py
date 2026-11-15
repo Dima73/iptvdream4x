@@ -469,9 +469,12 @@ class IPtvDreamStreamPlayer(
 		trace("play cid =", cid)
 		if self.cid:
 			cur_shift = 0
+			cur_title = ""
 			if self.old_shift:
 				cur_shift = self.old_shift - tdSec(syncTime())
-			self.channels.history.updateShift(self.cid, cur_shift=cur_shift)
+				if self.event:
+					cur_title = hasattr(self.event, "title") and self.event.title or ""
+			self.channels.history.updateShift(self.cid, cur_shift=cur_shift, cur_title=cur_title)
 		self.old_shift = 0
 		self.cid = cid
 		self.session.nav.stopService()
@@ -841,11 +844,12 @@ class IPtvDreamStreamPlayer(
 			self.zap_service.name = self.db.channels[cid].name
 			self.zapTimer.startLongTimer(minutes * 60)
 		elif cid is not None and archive_time is not None:
+			if self.shift:
+				self.old_shift = self.shift
 			if isinstance(archive_time, int):
 				self.setArchiveShift(archive_time)
 			else:
 				self.setArchiveShift(tdSec(archive_time-syncTime()))
-			self.old_shift = self.shift
 			self.play(cid)
 
 	def zapTimerRun(self):
@@ -1408,11 +1412,12 @@ class History(object):
 				self._history.append(add)
 				#self._index = len(self._history) - 1
 
-	def updateShift(self, curr, cur_shift=0):
+	def updateShift(self, curr, cur_shift=0, cur_title=""):
 		if self.counts() > 0:
 			for s in self._history:
 				if curr and curr == s.cid:
 					s.cur_shift = cur_shift
+					s.cur_title = cur_title
 					break
 
 	def findShift(self, curr):
@@ -1421,6 +1426,13 @@ class History(object):
 				if curr and curr == s.cid:
 					return s.cur_shift
 		return 0
+
+	def findTitle(self, curr):
+		if self.counts() > 0:
+			for s in self._history:
+				if curr and curr == s.cid:
+					return hasattr(s, "cur_title") and s.cur_title or ""
+		return ""
 
 	def clear(self):
 		if self.counts() > 1:
@@ -1984,7 +1996,11 @@ class IPtvDreamChannels(Screen):
 						shift = self.history.findShift(current.cid)
 						if shift:
 							self.cur_shift = shift
-							actions += [(_('Play "%s" as saved archive') % current.name, self.playHistorySelectedAsArchive)]
+							title = self.history.findTitle(current.cid)
+							name = current.name
+							if title:
+								name = "%s (%s)" % (current.name, title)
+							actions += [(_('Play as saved archive "%s"') % name, self.playHistorySelectedAsArchive)]
 						actions += [(_('Delete "%s" from history list') % current.name, self.delHistoryCurrrent)]
 					actions += [(_('Clear history list'), self.clearHistoryList)]
 				if current.has_archive:
