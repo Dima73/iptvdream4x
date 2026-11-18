@@ -36,6 +36,11 @@ try:
 	from Screens import Standby
 except:
 	Standby = None
+	
+try:
+	from Screens.PictureInPicture import PictureInPicture
+except:
+	PictureInPicture = None
 
 # enigma2 imports
 from Components.Sources.List import List as ListSource
@@ -316,6 +321,10 @@ class IPtvDreamStreamPlayer(
 
 		self.waitMessageTimer = eTimer()
 		self.waitMessageTimer.callback.append(self.showWaitMessage)
+
+		self.waitPiPMessageTimer = eTimer()
+		self.waitPiPMessageTimer.callback.append(self.showWaitPiPMessageTimer)
+		self.textPiPMessage = ""
 
 		self.waitScreenSaverTimer = eTimer()
 		self.waitScreenSaverTimer.callback.append(self.ScreenSaverTimerStart)
@@ -1029,6 +1038,62 @@ class IPtvDreamStreamPlayer(
 				self.session.execDialog(self.servicelist)
 		except:
 			pass
+
+	def playStreamPiP(self, answer=""):
+		self.textPiPMessage = ""
+		try:
+			from Components.SystemInfo import SystemInfo
+		except:
+			return 0
+		if SystemInfo.get("NumVideoDecoders", 1) > 1:
+			if answer:
+				try:
+					try:
+						if InfoBar.instance is not None and InfoBar.pipShown(InfoBar.instance):
+							try:
+								slist = self.servicelist
+								if slist and slist.dopipzap:
+									slist.togglePipzap()
+							except:
+								pass
+					except:
+						pass
+					if hasattr(self.session, "pip"):
+						del self.session.pip
+					self.session.pipshown = False
+				except:
+					pass
+				if isinstance(answer, str) and answer == "stop":
+					return
+				try:
+					if isinstance(answer, eServiceReference):
+						self.session.pip = self.session.instantiateDialog(PictureInPicture)
+						self.session.pip.show()
+						if self.session.pip.playService(answer):
+							self.session.pipshown = True
+							self.textPiPMessage = _("Play as PiP!")
+							self.waitPiPMessageTimer.start(1000, True)
+							return 1
+						else:
+							self.session.pipshown = False
+							del self.session.pip
+							self.textPiPMessage = _("Error play this stream as PiP!")
+							self.waitPiPMessageTimer.start(1000, True)
+							return 0
+				except:
+					pass
+		else:
+			self.textPiPMessage = _("This receiver not support PiP!")
+			self.waitPiPMessageTimer.start(1000, True)
+		return 0
+
+	def showWaitPiPMessageTimer(self):
+		if Standby and Standby.inStandby is None and self.textPiPMessage:
+			try:
+				self.session.open(MessageBox, self.textPiPMessage, MessageBox.TYPE_INFO, timeout=5)
+				self.textPiPMessage = ""
+			except:
+				pass
 
 	def activatePiP(self):
 		if self.pipZapAvailable is None:
@@ -1974,6 +2039,23 @@ class IPtvDreamChannels(Screen):
 			self.close(channel.cid, self.cur_shift)
 			self.cur_shift = 0
 
+	def playSelectedAsPiP(self):
+		current = self.getSelected()
+		if not current:
+			return
+		if current and self.mode != self.GROUPS and self.player and not self.db.channels[current.cid].is_protected and PictureInPicture is not None:
+			url = self.db.getStreamUrl(current.cid, None, None)
+			#if self.cfg.use_hlsgw.value:
+			#	url = "http://localhost:7001/url=%s" % urllib_parse.quote(url)
+			serviceref = eServiceReference(int(self.cfg.playerid.value), 0, url)
+			serviceref.setName(self.db.channels[current.cid].name)
+			try:
+				serviceref.setData(1, int(current.cid))
+			except:
+				serviceref.setData(1, 1)
+			self.close(None)
+			self.player.playStreamPiP(serviceref)
+
 	def showMenu(self):
 		self.dlg_actions = None
 		self.cur_shift = 0
@@ -2036,6 +2118,8 @@ class IPtvDreamChannels(Screen):
 		actions += [("-------------------------------", None)]
 		if TimerEditList and availabilityRecordTimers:
 			actions += [(_("Open timers list"), self.openTimerList)]
+		if current and self.mode != self.GROUPS and not self.db.channels[current.cid].is_protected and self.player and PictureInPicture is not None:
+			actions += [(_('Play selected service "%s" as PiP (if possible)') % current.name, self.playSelectedAsPiP)]
 		if current and self.mode != self.GROUPS and self.player and not self.player.shift and self.player.cid and current.cid == self.player.cid:
 			actions += [(_('Restart current service "%s"') % current.name, self.restartCurrentService)]
 
