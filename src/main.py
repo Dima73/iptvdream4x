@@ -841,7 +841,7 @@ class IPtvDreamStreamPlayer(
 		if self.cid:
 			self.session.openWithCallback(self.programSelected, IPtvDreamEpg, self.db, self.cid, self.shift, self.channels.mode, self.cfg)
 
-	def programSelected(self, cid=None, archive_time=None, zaptimer=None):
+	def programSelected(self, cid=None, archive_time=None, zaptimer=None, pip=None):
 		if zaptimer is not None and cid is not None:
 			try:
 				minutes = int(zaptimer)
@@ -852,6 +852,21 @@ class IPtvDreamStreamPlayer(
 			self.zap_service = self.channels.saved_state
 			self.zap_service.name = self.db.channels[cid].name
 			self.zapTimer.startLongTimer(minutes * 60)
+		elif pip is not None and archive_time is None and cid is not None:
+			if isinstance(pip, datetime):
+				shift = pip
+			else:
+				shift = syncTime() + secTd(pip)
+			url = self.db.getStreamUrl(cid, None, shift)
+			#if self.cfg.use_hlsgw.value:
+			#	url = "http://localhost:7001/url=%s" % urllib_parse.quote(url)
+			serviceref = eServiceReference(int(self.cfg.playerid.value), 0, url)
+			serviceref.setName(self.db.channels[cid].name)
+			try:
+				serviceref.setData(1, int(cid))
+			except:
+				serviceref.setData(1, 1)
+			self.playStreamPiP(serviceref)
 		elif cid is not None and archive_time is not None:
 			if self.shift:
 				self.old_shift = self.shift
@@ -2056,6 +2071,24 @@ class IPtvDreamChannels(Screen):
 			self.close(None)
 			self.player.playStreamPiP(serviceref)
 
+	def playSelectedArchivePiP(self, cid=None, archive_time=None):
+		if cid and archive_time and self.player and not self.db.channels[cid].is_protected and PictureInPicture is not None:
+			if isinstance(archive_time, datetime):
+				shift = archive_time
+			else:
+				shift = syncTime() + secTd(archive_time)
+			url = self.db.getStreamUrl(cid, None, shift)
+			#if self.cfg.use_hlsgw.value:
+			#	url = "http://localhost:7001/url=%s" % urllib_parse.quote(url)
+			serviceref = eServiceReference(int(self.cfg.playerid.value), 0, url)
+			serviceref.setName(self.db.channels[cid].name)
+			try:
+				serviceref.setData(1, int(cid))
+			except:
+				serviceref.setData(1, 1)
+			self.close(None)
+			self.player.playStreamPiP(serviceref)
+
 	def showMenu(self):
 		self.dlg_actions = None
 		self.cur_shift = 0
@@ -2286,7 +2319,7 @@ class IPtvDreamChannels(Screen):
 		if channel and self.modeChannels():
 			self.session.openWithCallback(self.showEpgCB, IPtvDreamEpg, self.db, channel.cid, 0, self.mode, self.cfg)
 
-	def showEpgCB(self, cid=None, archive_time=None, zaptimer=None):
+	def showEpgCB(self, cid=None, archive_time=None, zaptimer=None, pip=None):
 		if zaptimer is not None and self.player:
 			self.player.zapTimer.stop()
 			self.player.zap_service = self.player.zap_service_running = None
@@ -2294,7 +2327,9 @@ class IPtvDreamChannels(Screen):
 			self.zapTimerEpgStart(minutes)
 			return
 		trace("selected program", cid, archive_time)
-		if archive_time is not None:
+		if pip is not None and archive_time is None and cid is not None and self.player:
+			self.playSelectedArchivePiP(cid, pip)
+		elif archive_time is not None:
 			self.ok(archive_time)
 
 	def getSelected(self):
@@ -2449,6 +2484,7 @@ class IPtvDreamEpg(Screen):
 		self.curr = False
 		self.day = 0
 		self.mode = mode
+		self.prev_val = config.plugins.IPtvDream.first_start_time_archive.value
 		self.list.onSelectionChanged.append(self.updateLabels)
 		self.onShown.append(self.start)
 
@@ -2532,7 +2568,7 @@ class IPtvDreamEpg(Screen):
 			return
 		entry = entry[0]
 		if self.db.channels[self.cid].has_archive and entry.begin < syncTime():
-			self.close(self.cid, entry.begin)
+			self.close(cid, entry.begin)
 
 	def showMenu(self):
 		actions = []
@@ -2540,7 +2576,7 @@ class IPtvDreamEpg(Screen):
 		if not entry:
 			return
 		entry = entry[0]
-		if not self.shift and entry.begin < syncTime():
+		if not self.shift and self.db.channels[self.cid].has_archive and entry.begin < syncTime():
 			actions += [(_("Enable archive - forward to (hh:mm)") + (": '%s'" % entry.name), self.firstStartArchiveTime)]
 		if TMBD:
 			actions += [(_("Search '%s' in TMBD") % entry.name, self.runTMBD)]
@@ -2553,6 +2589,8 @@ class IPtvDreamEpg(Screen):
 			actions += [(_("Record available for 'Player ID' 1 or 4097(only using Gstreamer)"), None)]
 		if TimerEditList:
 			actions += [(_("Open timers list"), self.openTimerList)]
+		if PictureInPicture and not self.db.channels[self.cid].is_protected and self.db.channels[self.cid].has_archive and entry.begin < syncTime():
+			actions += [(_("Enable archive as PiP - forward to (hh:mm)") + (": '%s'" % entry.name), self.firstStartPiPArchiveTime)]
 
 		def cb(action=None):
 			if action is not None:
@@ -2656,6 +2694,31 @@ class IPtvDreamEpg(Screen):
 					warning_text = _("Warning!\nIt is possible that the recording times %s timers from one server%s overlap.") % (count, server_text)
 				if add_text:
 					self.session.open(MessageBox, add_text + warning_text, MessageBox.TYPE_INFO, timeout=6)
+
+	def firstStartPiPArchiveTime(self):
+		entry = self.list.getCurrent()
+		if not entry:
+			return
+		entry = entry[0]
+		if not self.db.channels[self.cid].is_protected and self.db.channels[self.cid].has_archive and entry.begin < syncTime():
+			from .manager import TimeInput
+			self.prev_val = config.plugins.IPtvDream.first_start_time_archive.value
+			config.plugins.IPtvDream.first_start_time_archive.value = [0,0]
+			dlg = self.session.openWithCallback(self.archivePiPTimeClosed, TimeInput, config.plugins.IPtvDream.first_start_time_archive, save=False)
+			dlg.setTitle(_("Enable archive as PiP - forward to (hh:mm)"))
+
+	def archivePiPTimeClosed(self, ret):
+		config.plugins.IPtvDream.first_start_time_archive.value = self.prev_val
+		if len(ret) > 1 and ret[0]:
+			entry = self.list.getCurrent()
+			if not entry:
+				return
+			entry = entry[0]
+			if  not self.db.channels[self.cid].is_protected and self.db.channels[self.cid].has_archive and entry.begin < syncTime():
+				archive = tdSec(entry.begin - syncTime())
+				first_start_time = (ret[1][0]  * 3600) + (ret[1][1]  * 60)
+				currtime = syncTime() + secTd(archive + first_start_time)
+				self.close(self.cid, None, None, currtime)
 
 	def firstStartArchiveTime(self):
 		entry = self.list.getCurrent()
@@ -2801,7 +2864,7 @@ class IPtvDreamEpgInfo(Screen):
 	def initGui(self):
 		self._main_part.updateLayout()
 		self._progress.setEpg(self.entry, self.shift)
-	
+
 	def showMenu(self):
 		actions = []
 		entry = self.entry
