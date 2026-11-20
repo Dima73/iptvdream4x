@@ -2568,7 +2568,7 @@ class IPtvDreamEpg(Screen):
 			return
 		entry = entry[0]
 		if self.db.channels[self.cid].has_archive and entry.begin < syncTime():
-			self.close(cid, entry.begin)
+			self.close(self.cid, entry.begin)
 
 	def showMenu(self):
 		actions = []
