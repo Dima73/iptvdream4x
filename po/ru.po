@@ -582,3 +582,18 @@ msgstr "Включить архив - вперед на (чч:мм)"
 
 msgid "Play as saved archive \"%s\""
 msgstr "Запуск как сохраненный архив \"%s\""
+
+msgid "Play as PiP!"
+msgstr "Воспроизвести как PiP!"
+
+msgid "Error play this stream as PiP!"
+msgstr "Ошибка запуска этого стрима как PiP!"
+
+msgid "This receiver not support PiP!"
+msgstr "У этого ресивера нет поддержки PiP!"
+
+msgid "Play selected service \"%s\" as PiP (if possible)"
+msgstr "Запуск сервиса \"%s\" как PiP (при возможности)"
+
+msgid "Enable archive as PiP - forward to (hh:mm)"
+msgstr "Включить архив  как PiP (при возможности) - вперед на (чч:мм)"
